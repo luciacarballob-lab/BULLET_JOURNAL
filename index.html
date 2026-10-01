@@ -1,0 +1,1729 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bujo</title>
+<meta name="description" content="Bullet journal personal: registro diario, trackers y backup local.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bujo">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F3F4F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121419" media="(prefers-color-scheme: dark)">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+/* Layout: una columna tipo libreta (máx. 560px), cabecera fija con la fecha al estilo del cuaderno, secciones plegables con títulos espaciados. */
+:root{
+  --paper:#F3F4F1; --dot:#D3D6DD; --card:#FFFFFF; --card2:#F7F8F6;
+  --ink:#1D2230; --muted:#6B7080; --line:#E2E4E8;
+  --accent:#2C47B8; --accent-ink:#FFFFFF; --accent-soft:#E6EAFA;
+  --red:#C9372C; --red-soft:#FBE7E5; --amber:#B7791F; --amber-soft:#FBF1DE; --green:#2F8A57; --green-soft:#E1F3E8;
+  --s0:#C9372C; --s1:#E0663A; --s2:#E3A13A; --s3:#B9B23D; --s4:#6DAA4E; --s5:#2F8A57;
+  --shadow:0 1px 2px rgba(20,25,40,.06),0 2px 8px rgba(20,25,40,.04);
+  --f-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --f-display:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --f-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:14px; --tap:44px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#121419; --dot:#262A33; --card:#1B1E25; --card2:#20242C;
+  --ink:#E8EAF0; --muted:#9097A8; --line:#2C313B;
+  --accent:#8EA2FF; --accent-ink:#0F1220; --accent-soft:#252C4A;
+  --red:#FF7A6E; --red-soft:#3A2020; --amber:#E7B45A; --amber-soft:#3A2F1C; --green:#6FD39A; --green-soft:#1D3328;
+  --s0:#E8574B; --s1:#EE7A4E; --s2:#E9B04E; --s3:#C9C356; --s4:#83C066; --s5:#4FB57C;
+  --shadow:none; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#121419; --dot:#262A33; --card:#1B1E25; --card2:#20242C;
+  --ink:#E8EAF0; --muted:#9097A8; --line:#2C313B;
+  --accent:#8EA2FF; --accent-ink:#0F1220; --accent-soft:#252C4A;
+  --red:#FF7A6E; --red-soft:#3A2020; --amber:#E7B45A; --amber-soft:#3A2F1C; --green:#6FD39A; --green-soft:#1D3328;
+  --s0:#E8574B; --s1:#EE7A4E; --s2:#E9B04E; --s3:#C9C356; --s4:#83C066; --s5:#4FB57C;
+  --shadow:none; color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font:16px/1.4 var(--f-ui);-webkit-text-size-adjust:100%;
+  background-image:radial-gradient(var(--dot) 1px,transparent 1.2px);background-size:18px 18px;background-attachment:fixed;
+  min-height:100vh;overscroll-behavior-y:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
+
+/* Header */
+.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--paper) 92%,transparent);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);padding-top:env(safe-area-inset-top,0px);border-bottom:1px solid var(--line)}
+.top-in{max-width:560px;margin:0 auto;padding:8px 16px 10px}
+.toprow{display:flex;align-items:center;gap:8px;min-height:44px}
+.datebtn{flex:1;min-width:0;text-align:left;position:relative;display:flex;align-items:baseline;gap:10px;min-height:44px}
+.datebtn .d{font:600 22px/1 var(--f-display);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.datebtn .w{font:600 13px/1 var(--f-ui);letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+.datebtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%}
+.iconbtn{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:var(--ink)}
+.iconbtn:active{background:var(--card2)}
+.iconbtn svg{width:22px;height:22px}
+.saved{font-size:12px;color:var(--green);opacity:0;transition:opacity .3s;white-space:nowrap}
+.saved.on{opacity:1}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px;align-items:stretch}
+.wd{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0 6px;border-radius:10px;min-height:52px}
+.wd .l{font-size:11px;color:var(--muted);letter-spacing:.08em}
+.wd .n{font:600 16px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.wd .c{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--muted);opacity:.6}
+.wd .c.cp{border-color:var(--amber);background:linear-gradient(90deg,var(--amber) 50%,transparent 50%);opacity:1}
+.wd .c.cf{border-color:var(--green);background:var(--green);opacity:1}
+.wd.sel{background:var(--accent);color:var(--accent-ink)}
+.wd.sel .l{color:var(--accent-ink);opacity:.8}
+.wd.today:not(.sel) .n{color:var(--accent)}
+.wd.future{opacity:.45}
+.weeknav{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+.weeknav button{font-size:13px;color:var(--accent);min-height:32px;padding:0 4px}
+.todaylink{font-weight:600}
+
+/* Banners */
+.banner{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin-top:12px;font-size:14px}
+.banner .t{flex:1;min-width:0}
+.banner button{font-weight:600;min-height:36px;padding:0 10px;border-radius:10px}
+.b-demo{background:var(--amber-soft);color:var(--amber)}
+.b-demo button{background:var(--amber);color:var(--card)}
+.b-warn{background:var(--red-soft);color:var(--red)}
+.b-warn button{background:var(--red);color:var(--card)}
+.b-info{background:var(--accent-soft);color:var(--accent)}
+.b-info button{background:var(--accent);color:var(--accent-ink)}
+
+/* Sections */
+.sec{margin-top:22px}
+.sech{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;text-align:left}
+.sech h2{margin:0;font:600 12px/1 var(--f-ui);letter-spacing:.34em;text-transform:uppercase;color:var(--ink);flex:1}
+.sech .meta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sech .chev{width:16px;height:16px;color:var(--muted);transition:transform .2s}
+.sec.closed .chev{transform:rotate(-90deg)}
+.sec.closed .secb{display:none}
+.secb{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.secb.grid2{display:grid;grid-template-columns:1fr 1fr}
+.secb.grid2 .trk .counter{gap:6px;justify-content:space-between}
+.secb.grid2 .trk .cval{min-width:32px}
+.secb.grid2 .cunit,.secb.grid2 .aux{display:none}
+.card{background:var(--card);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.trk .hd{display:flex;align-items:center;gap:8px;min-height:28px}
+.trk .nm{font-weight:600;font-size:15px;flex:1;min-width:0}
+.trk .rec{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none}
+.trk.done .rec{background:var(--green)}
+.trk .aux{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.trk .bd{margin-top:8px;display:flex;flex-direction:column;gap:10px}
+.clear{font-size:12px;color:var(--muted);min-height:28px;padding:0 4px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lbl{font-size:13px;color:var(--muted);min-width:0}
+
+/* Scale */
+.scale{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px}
+.sc{min-height:var(--tap);border-radius:11px;background:var(--card2);border:1px solid var(--line);font:600 16px/1 var(--f-display);font-variant-numeric:tabular-nums;display:grid;place-items:center;position:relative}
+.sc.on{color:#15171C;border-color:transparent}
+.sc .sw{position:absolute;left:8px;right:8px;bottom:5px;height:3px;border-radius:2px;opacity:.9}
+.sc.on .sw{display:none}
+.face svg{width:28px;height:28px}
+.sc.face.on{background:var(--accent);color:var(--accent-ink)}
+
+/* Segmented, chips */
+.seg{display:flex;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;min-height:38px;border-radius:9px;font-size:15px;font-weight:500;white-space:nowrap;padding:0 8px}
+.seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.12);color:var(--accent);font-weight:600}
+:root[data-theme="dark"] .seg button.on{background:var(--accent-soft)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .seg button.on{background:var(--accent-soft)}}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:38px;padding:0 13px;border-radius:19px;background:var(--card2);border:1px solid var(--line);font-size:15px;display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.chip.ghost{background:transparent;border-style:dashed;color:var(--muted)}
+.chip.sm{min-height:32px;font-size:14px;padding:0 10px}
+.chip .x{opacity:.6;font-size:16px;margin-left:2px}
+.chip .cdot{width:7px;height:7px;border-radius:50%;background:var(--amber)}
+
+/* Counter */
+.counter{display:flex;align-items:center;gap:10px}
+.cbtn{width:var(--tap);height:var(--tap);border-radius:12px;background:var(--card2);border:1px solid var(--line);font:500 24px/1 var(--f-display);display:grid;place-items:center}
+.cbtn.plus{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.cval{min-width:48px;text-align:center;font:600 24px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.cval.nil{color:var(--muted)}
+.cunit{font-size:13px;color:var(--muted)}
+.glass{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0}
+.glass i{width:10px;height:16px;border-radius:2px 2px 4px 4px;border:1.5px solid var(--accent);opacity:.5}
+.glass i.f{background:var(--accent);opacity:1}
+.goal{font-size:12px;font-weight:600;color:var(--green);background:var(--green-soft);padding:3px 8px;border-radius:8px}
+
+/* Inputs */
+.inp{min-height:var(--tap);border-radius:11px;border:1px solid var(--line);background:var(--card2);padding:0 12px;font-size:16px;width:100%;min-width:0}
+textarea.inp{padding:10px 12px;min-height:72px;resize:vertical;line-height:1.4}
+input[type=time].inp,input[type=date].inp,input[type=month].inp{font-variant-numeric:tabular-nums;-webkit-appearance:none;appearance:none;display:flex;align-items:center}
+.tfield{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.sleepgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hours{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.hours b{font:600 26px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.link{color:var(--accent);font-size:14px;font-weight:500;min-height:32px;padding:0 2px}
+
+/* Tag input */
+.tagin{display:flex;flex-direction:column;gap:6px}
+.tagin .row{flex-wrap:nowrap}
+.sugg{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.sugg::-webkit-scrollbar{display:none}
+.sugg .chip{flex:none}
+.meal{display:flex;flex-direction:column;gap:6px;padding-block:8px;border-top:1px solid var(--line)}
+.meal:first-child{border-top:0;padding-top:0}
+.meal .mh{display:flex;align-items:center;gap:8px}
+.meal .mn{font:600 12px/1 var(--f-ui);letter-spacing:.2em;text-transform:uppercase;flex:1}
+.addbtn{min-height:var(--tap);min-width:var(--tap);border-radius:11px;background:var(--accent);color:var(--accent-ink);font-weight:600;padding:0 12px;flex:none}
+
+/* Bristol */
+.bgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.bb{min-height:56px;border-radius:10px;background:var(--card2);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:600 13px/1 var(--f-display)}
+.bb svg{width:26px;height:18px}
+.blist{display:flex;flex-direction:column;gap:6px}
+.bent{display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:10px;padding:6px 8px;border:1px solid var(--line)}
+.bent .bt{font-weight:600;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center}
+.bent svg{width:26px;height:18px}
+.bent .bd2{font-size:13px;color:var(--muted);flex:1;min-width:0}
+.bent input{width:96px;min-height:36px;border-radius:9px;border:1px solid var(--line);background:var(--card);padding:0 6px}
+.bc-a{color:var(--amber)} .bc-g{color:var(--green)} .bc-r{color:var(--red)}
+
+/* Rapid log */
+.log{display:flex;flex-direction:column}
+.li{display:flex;align-items:flex-start;gap:4px;min-height:var(--tap);border-bottom:1px dashed var(--line)}
+.li:last-child{border-bottom:0}
+.bul{width:40px;height:var(--tap);display:grid;place-items:center;flex:none;font:600 20px/1 var(--f-display);color:var(--ink)}
+.li .tx{flex:1;min-width:0;padding:11px 0;text-align:left;word-break:break-word}
+.li.done .tx{color:var(--muted)}
+.li.cancel .tx{text-decoration:line-through;color:var(--muted)}
+.li.mig{opacity:.55}
+.li .tm{font:500 13px/1 var(--f-mono);color:var(--muted);padding:15px 4px 0}
+.person{color:var(--accent);font-weight:600}
+.logadd{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.empty{color:var(--muted);font-size:14px;padding:6px 0}
+.sugbar{display:flex;align-items:center;gap:8px;background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:6px 6px 6px 10px;font-size:14px}
+.sugbar .t{flex:1;min-width:0}
+.sugbar button{background:var(--accent);color:var(--accent-ink);font-weight:600;border-radius:8px;min-height:34px;padding:0 10px}
+.cycleinfo{font-size:13px;color:var(--muted)}
+.cycleinfo b{color:var(--ink);font-weight:600}
+
+/* Sheets */
+.scrim{position:fixed;inset:0;background:rgba(10,12,20,.42);z-index:50;opacity:0;transition:opacity .2s}
+.scrim.on{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--paper);border-radius:18px 18px 0 0;max-height:92vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .25s ease;box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+.sheet.on{transform:none}
+.sheet .sh{display:flex;align-items:center;gap:8px;padding:10px 12px 8px 18px;border-bottom:1px solid var(--line);max-width:560px;width:100%;margin:0 auto}
+.sheet .sh h3{flex:1;margin:0;font:600 17px/1.2 var(--f-ui)}
+.sheet .sbody{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px));max-width:560px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.full{position:fixed;inset:0;z-index:40;background:var(--paper);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.full .top{position:sticky}
+.btn{min-height:var(--tap);border-radius:12px;padding:0 16px;font-weight:600;background:var(--card);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.dan{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
+.btn.dan.fill{background:var(--red);color:var(--paper);border-color:var(--red)}
+.btn.blk{width:100%}
+.btn:disabled{opacity:.45}
+.group{background:var(--card);border-radius:var(--r);border:1px solid var(--line);overflow:hidden}
+.gi{display:flex;align-items:center;gap:10px;min-height:50px;padding:8px 14px;border-top:1px solid var(--line);width:100%;text-align:left}
+.gi:first-child{border-top:0}
+.gi .k{flex:1;min-width:0}
+.gi .k small{display:block;color:var(--muted);font-size:13px}
+.gi .v{color:var(--muted);font-size:14px;text-align:right}
+.gh{font:600 12px/1 var(--f-ui);letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin:14px 4px 0}
+.note{font-size:13px;color:var(--muted);line-height:1.45;margin:0 4px}
+.warnbox{background:var(--red-soft);color:var(--red);border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.45}
+.okbox{background:var(--green-soft);color:var(--green);border-radius:12px;padding:10px 12px;font-size:14px}
+.sw-t{width:51px;height:31px;border-radius:16px;background:var(--line);position:relative;flex:none;transition:background .2s}
+.sw-t::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.sw-t.on{background:var(--green)}
+.sw-t.on::after{transform:translateX(20px)}
+.mini{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;color:var(--muted);flex:none}
+.mini:disabled{opacity:.3}
+.mini svg{width:18px;height:18px}
+.arch{opacity:.5}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;font-variant-numeric:tabular-nums}
+
+/* Lock */
+.lock{position:fixed;inset:0;z-index:100;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px}
+.lock h1{font:600 13px/1 var(--f-ui);letter-spacing:.4em;text-transform:uppercase;margin:0}
+.pins{display:flex;gap:14px}
+.pins i{width:14px;height:14px;border-radius:50%;border:2px solid var(--ink)}
+.pins i.f{background:var(--ink)}
+.pins.err{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pad{display:grid;grid-template-columns:repeat(3,72px);gap:14px}
+.pad button{width:72px;height:72px;border-radius:50%;background:var(--card);border:1px solid var(--line);font:500 28px/1 var(--f-display)}
+.pad button:active{background:var(--accent-soft)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:12px;font-size:14px;z-index:200;opacity:0;transition:all .25s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.fatal{margin:40px 16px;padding:16px;border-radius:12px;background:var(--red-soft);color:var(--red)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="layer"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+'use strict';
+/* =====================================================================
+   Bujo · v0.1.0 (fase 1a)
+   Esquema de datos v1. Cambios de esquema => nueva entrada en MIGRATIONS.
+   ===================================================================== */
+const APP_VERSION = '0.1.0';
+const SCHEMA_VERSION = 1;
+const IDB_VERSION = 1;
+const DB_REAL = 'bujo', DB_DEMO = 'bujo_demo';
+const TZ = 'Europe/Madrid';
+const STORES = ['meta','trackers','entries','events','tags','items','people'];
+
+/* ---------------- utilidades ---------------- */
+const $ = (s, r = document) => r.querySelector(s);
+function h(tag, a, ...kids) {
+  const el = document.createElement(tag);
+  if (a) for (const k in a) {
+    const v = a[k];
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'html') el.innerHTML = v;
+    else if (k === 'style') el.style.cssText = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k in el && typeof v !== 'string') el[k] = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat(9)) if (c != null && c !== false) el.append(c.nodeType ? c : document.createTextNode(String(c)));
+  return el;
+}
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+const clone = o => JSON.parse(JSON.stringify(o));
+const nowISO = () => new Date().toISOString();
+const DOW = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const DOW1 = ['D','L','M','X','J','V','S'];
+const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function todayStr() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+function nowHM() {
+  return new Intl.DateTimeFormat('es-ES', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+}
+const dObj = s => { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+const dStr = o => o.toISOString().slice(0, 10);
+const addDays = (s, n) => { const o = dObj(s); o.setUTCDate(o.getUTCDate() + n); return dStr(o); };
+const diffDays = (a, b) => Math.round((dObj(a) - dObj(b)) / 864e5);
+const dow = s => dObj(s).getUTCDay();
+const mondayOf = s => addDays(s, -((dow(s) + 6) % 7));
+const fmtShort = s => { const [y, m, d] = s.split('-'); return `${+d} / ${+m} / ${y.slice(2)}`; };
+const fmtHuman = s => { const o = dObj(s); return `${DOW[o.getUTCDay()]} ${o.getUTCDate()} de ${MONTHS[o.getUTCMonth()]}`; };
+const hmToMin = t => { if (!t) return null; const [a, b] = t.split(':').map(Number); return a * 60 + b; };
+const fmtHours = m => m == null ? '—' : `${Math.floor(m / 60)} h ${String(Math.round(m % 60)).padStart(2, '0')} min`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function toast(msg, ms = 2200) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), ms);
+}
+function flashSaved() {
+  const s = $('#saved'); if (!s) return;
+  s.classList.add('on'); clearTimeout(flashSaved._t); flashSaved._t = setTimeout(() => s.classList.remove('on'), 1100);
+}
+const ICON = {
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  chev: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 15l6-6 6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>',
+};
+const svgEl = s => { const d = document.createElement('span'); d.innerHTML = s; d.style.display = 'contents'; return d; };
+
+/* ---------------- capa de datos ---------------- */
+function idbReq(r) { return new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+class IDBAdapter {
+  constructor(name) { this.name = name; this.kind = 'idb'; }
+  open() {
+    return new Promise((res, rej) => {
+      let r;
+      try { r = indexedDB.open(this.name, IDB_VERSION); } catch (e) { return rej(e); }
+      r.onupgradeneeded = e => {
+        const db = r.result, old = e.oldVersion;
+        // Migraciones estructurales de IndexedDB: añadir casos, nunca borrar stores con datos.
+        if (old < 1) {
+          db.createObjectStore('meta', { keyPath: 'key' });
+          db.createObjectStore('trackers', { keyPath: 'id' });
+          const en = db.createObjectStore('entries', { keyPath: ['date', 'trackerId'] });
+          en.createIndex('date', 'date'); en.createIndex('trackerId', 'trackerId');
+          const ev = db.createObjectStore('events', { keyPath: 'id' });
+          ev.createIndex('date', 'date'); ev.createIndex('trackerId', 'trackerId');
+          const tg = db.createObjectStore('tags', { keyPath: 'id' });
+          tg.createIndex('norm', 'norm');
+          const it = db.createObjectStore('items', { keyPath: 'id' });
+          it.createIndex('date', 'date'); it.createIndex('collection', 'collection');
+          it.createIndex('trail', 'trail', { multiEntry: true });
+          const pp = db.createObjectStore('people', { keyPath: 'id' });
+          pp.createIndex('norm', 'norm');
+        }
+      };
+      r.onblocked = () => rej(new Error('La base de datos está bloqueada por otra pestaña.'));
+      r.onsuccess = () => { this.db = r.result; this.db.onversionchange = () => { this.db.close(); location.reload(); }; res(this); };
+      r.onerror = () => rej(r.error);
+    });
+  }
+  st(store, mode = 'readonly') { return this.db.transaction(store, mode).objectStore(store); }
+  get(s, k) { return idbReq(this.st(s).get(k)); }
+  all(s) { return idbReq(this.st(s).getAll()); }
+  byIndex(s, i, q) { return idbReq(this.st(s).index(i).getAll(q)); }
+  put(s, v) { return idbReq(this.st(s, 'readwrite').put(v)); }
+  del(s, k) { return idbReq(this.st(s, 'readwrite').delete(k)); }
+  putMany(s, arr) {
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction(s, 'readwrite'), os = tx.objectStore(s);
+      arr.forEach(v => os.put(v)); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
+    });
+  }
+  replaceAll(data) {
+    return new Promise((res, rej) => {
+      const tx = this.db.transaction(STORES, 'readwrite');
+      for (const s of STORES) { const os = tx.objectStore(s); os.clear(); (data[s] || []).forEach(v => os.put(v)); }
+      tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error || new Error('Importación abortada'));
+    });
+  }
+  close() { try { this.db.close(); } catch (e) {} }
+}
+/* Respaldo en memoria si IndexedDB no está disponible (p. ej. navegación privada). Se avisa en pantalla. */
+class MemAdapter {
+  constructor() { this.kind = 'mem'; this.s = {}; STORES.forEach(n => this.s[n] = new Map()); }
+  key(s, v) { return s === 'entries' ? v.date + '|' + v.trackerId : s === 'meta' ? v.key : v.id; }
+  async open() { return this; }
+  async get(s, k) { return clone(this.s[s].get(Array.isArray(k) ? k.join('|') : k) ?? null) || undefined; }
+  async all(s) { return clone([...this.s[s].values()]); }
+  async byIndex(s, i, q) { return clone([...this.s[s].values()].filter(v => Array.isArray(v[i]) ? v[i].includes(q) : v[i] === q)); }
+  async put(s, v) { this.s[s].set(this.key(s, v), clone(v)); }
+  async del(s, k) { this.s[s].delete(Array.isArray(k) ? k.join('|') : k); }
+  async putMany(s, arr) { arr.forEach(v => this.put(s, v)); }
+  async replaceAll(data) { STORES.forEach(n => { this.s[n].clear(); (data[n] || []).forEach(v => this.put(n, v)); }); }
+  close() {}
+}
+
+/* Migraciones a nivel de datos (para backups antiguos y para la BD). Clave = versión destino. */
+const MIGRATIONS = {
+  // 2: data => { ...transformar preservando todo...; return data; }
+};
+function migrateData(data, from) {
+  for (let v = from + 1; v <= SCHEMA_VERSION; v++) if (MIGRATIONS[v]) data = MIGRATIONS[v](data);
+  return data;
+}
+
+/* ---------------- configuración por defecto ---------------- */
+const DEFAULT_CATEGORIES = [
+  { id: 'lacteos', name: 'Lácteos' }, { id: 'gluten', name: 'Gluten' }, { id: 'legumbres', name: 'Legumbres' },
+  { id: 'ultra', name: 'Ultraprocesados' }, { id: 'picante', name: 'Picante' }, { id: 'fritos', name: 'Fritos' },
+];
+const DEFAULT_SECTIONS = [
+  { id: 'registro', name: 'Registro del día' }, { id: 'sueno', name: 'Sueño' }, { id: 'estado', name: 'Estado' },
+  { id: 'digestivo', name: 'Digestivo' }, { id: 'alimentacion', name: 'Alimentación' }, { id: 'salud', name: 'Salud y ciclo' },
+  { id: 'consumo', name: 'Consumo' }, { id: 'habitos', name: 'Hábitos' }, { id: 'agua', name: 'Agua' },
+  { id: 'suplementos', name: 'Suplementos' }, { id: 'sexo', name: 'Sexo' },
+];
+const opt = (id, label) => ({ id, label });
+function defaultTrackers() {
+  let o = 0; const T = (id, name, type, section, config = {}, extra = {}) =>
+    ({ id, name, type, section, config, order: o++, required: true, sensitive: false, archived: false, created: nowISO(), ...extra });
+  return [
+    T('sleep', 'Sueño', 'sleep', 'sueno', { min: 0, max: 5, colors: 'good-high' }),
+    T('mood', 'Mood', 'scale', 'estado', { min: 1, max: 5, style: 'faces' }),
+    T('stress', 'Estrés', 'scale', 'estado', { min: 0, max: 5, colors: 'bad-high' }),
+    T('stomach', 'Estómago', 'multi', 'digestivo', { options: ['Bien','Regular','Mal','Hinchado','Gases','Dolor','Acidez','Náuseas'].map(l => opt(norm(l), l)), exclusive: ['bien'] }),
+    T('stomach_int', 'Intensidad digestiva', 'scale', 'digestivo', { min: 0, max: 5, colors: 'bad-high' }),
+    T('bowel', 'Deposiciones', 'list', 'digestivo', { kind: 'bristol' }),
+    T('meals', 'Comidas', 'meals', 'alimentacion', { meals: [opt('desayuno','Desayuno'), opt('comida','Comida'), opt('cena','Cena'), opt('extras','Extras')] }),
+    T('pill', 'Pastilla endometriosis', 'bool', 'salud', { time: true }, { sensitive: true }),
+    T('cycle', 'Ciclo menstrual', 'cycle', 'salud', {}, { sensitive: true }),
+    T('cigs', 'Cigarros', 'counter', 'consumo', { unit: '' }, { required: false, sensitive: true }),
+    T('joints', 'Porros', 'counter', 'consumo', { unit: '' }, { required: false, sensitive: true }),
+    T('caffeine', 'Cafeína', 'counter', 'consumo', { unit: 'bebidas' }, { required: false, sensitive: true }),
+    T('alcohol', 'Alcohol', 'counter', 'consumo', { unit: 'bebidas' }, { required: false, sensitive: true }),
+    T('skincare', 'Skincare', 'checklist', 'habitos', { options: [opt('am','Mañana'), opt('pm','Noche')] }),
+    T('exercise', 'Ejercicio', 'bool', 'habitos', {
+      details: [{ key: 'tipo', label: 'Tipo', kind: 'text', suggestions: ['Gym','Caminar','Pilates','Yoga','Correr','Bici'] }, { key: 'min', label: 'Duración', kind: 'number', unit: 'min' }],
+      suggestKeywords: ['gym','gimnasio','pilates','yoga','correr','padel','natacion','entreno','spinning'] }),
+    T('breathing', 'Respiración', 'bool', 'habitos'),
+    T('water', 'Agua', 'counter', 'agua', { unit: 'vasos', goal: 8 }),
+    T('supps', 'Suplementos', 'checklist', 'suplementos', { options: [opt('b12','B12'), opt('mg','Magnesio'), opt('lteanina','L-teanina'), opt('vitd','Vitamina D'), opt('omega3','Omega 3'), opt('creatina','Creatina')], allButton: true }),
+    T('sex', 'Sexo', 'multi', 'sexo', { options: [opt('no','No'), opt('sola','Sola'), opt('pareja','En pareja')], exclusive: ['no'] }, { sensitive: true, required: false }),
+  ];
+}
+function defaultMeta() {
+  return { key: 'app', schemaVersion: SCHEMA_VERSION, created: nowISO(), lastBackup: null, pinHash: null, pinSalt: null,
+    categories: clone(DEFAULT_CATEGORIES), sections: clone(DEFAULT_SECTIONS), minSample: 5, hideSensitive: false,
+    collapsed: {}, theme: 'system' };
+}
+const TYPE_LABEL = { scale: 'Escala', bool: 'Sí / no', number: 'Numérico', counter: 'Contador', multi: 'Selección múltiple',
+  checklist: 'Checklist', tags: 'Etiquetas', time: 'Hora', list: 'Lista de entradas', note: 'Nota libre',
+  sleep: 'Sueño (compuesto)', meals: 'Comidas (etiquetas)', cycle: 'Ciclo (compuesto)' };
+const CREATABLE = ['scale','bool','number','counter','multi','checklist','tags','time','list','note'];
+
+/* ---------------- estado ---------------- */
+const S = {
+  db: null, demo: false, date: todayStr(), meta: null, trackers: [], tags: new Map(), people: new Map(),
+  day: { entries: new Map(), events: [], items: [], ghosts: [] }, cycle: [], unlocked: false, persist: null,
+};
+const activeTrackers = () => S.trackers.filter(t => !t.archived).sort((a, b) => a.order - b.order);
+const trackerById = id => S.trackers.find(t => t.id === id);
+
+async function openDB(demo) {
+  if (S.db) S.db.close();
+  let db;
+  try { db = await new IDBAdapter(demo ? DB_DEMO : DB_REAL).open(); }
+  catch (e) { console.warn(e); db = await new MemAdapter().open(); }
+  S.db = db; S.demo = demo;
+  let meta = await db.get('meta', 'app');
+  if (!meta) {
+    meta = defaultMeta();
+    await db.put('meta', meta);
+    await db.putMany('trackers', defaultTrackers());
+  } else if ((meta.schemaVersion || 1) < SCHEMA_VERSION) {
+    // Migración en sitio: exporta todo, transforma, reescribe en una transacción.
+    const data = await dumpAll();
+    const out = migrateData(data, meta.schemaVersion || 1);
+    out.meta.forEach(m => { if (m.key === 'app') m.schemaVersion = SCHEMA_VERSION; });
+    await db.replaceAll(out);
+    meta = await db.get('meta', 'app');
+  }
+  S.meta = Object.assign(defaultMeta(), meta);
+  S.trackers = await db.all('trackers');
+  S.tags = new Map((await db.all('tags')).map(t => [t.id, t]));
+  S.people = new Map((await db.all('people')).map(p => [p.id, p]));
+  await loadCycle();
+}
+async function saveMeta() { await S.db.put('meta', S.meta); }
+async function dumpAll() {
+  const out = {}; for (const s of STORES) out[s] = await S.db.all(s); return out;
+}
+
+/* ---------------- día ---------------- */
+async function loadDay(date) {
+  const [en, ev, it, gh] = await Promise.all([
+    S.db.byIndex('entries', 'date', date), S.db.byIndex('events', 'date', date),
+    S.db.byIndex('items', 'date', date), S.db.byIndex('items', 'trail', date),
+  ]);
+  S.day = {
+    entries: new Map(en.map(e => [e.trackerId, e])),
+    events: ev.sort((a, b) => (a.time || '99').localeCompare(b.time || '99') || a.created.localeCompare(b.created)),
+    items: it.filter(i => i.dateType === 'day').sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.created.localeCompare(b.created)),
+    ghosts: gh.filter(i => i.date !== date),
+  };
+}
+const val = id => S.day.entries.get(id)?.value;
+async function setEntry(trackerId, value) {
+  const key = [S.date, trackerId];
+  if (value == null) { await S.db.del('entries', key); S.day.entries.delete(trackerId); }
+  else {
+    const e = { date: S.date, trackerId, value, updated: nowISO() };
+    await S.db.put('entries', e); S.day.entries.set(trackerId, e);
+  }
+  if (trackerId === 'cycle' || trackerById(trackerId)?.type === 'cycle') await loadCycle();
+  flashSaved(); refreshTracker(trackerId); refreshWeek();
+}
+function isRecorded(t, entries, events) {
+  if (t.type === 'list') return entries.has(t.id) || events.some(e => e.trackerId === t.id);
+  const e = entries.get(t.id); if (!e) return false;
+  const v = e.value;
+  if (t.type === 'sleep') return !!(v.wake || v.bed || v.hoursOverride != null) && v.quality != null;
+  if (t.type === 'meals') return Object.keys(v || {}).length >= 3;
+  return v !== '' && v != null;
+}
+async function completeness(date) {
+  const [en, ev] = await Promise.all([S.db.byIndex('entries', 'date', date), S.db.byIndex('events', 'date', date)]);
+  const map = new Map(en.map(e => [e.trackerId, e]));
+  const req = activeTrackers().filter(t => t.required);
+  const done = req.filter(t => isRecorded(t, map, ev)).length;
+  return { done, total: req.length };
+}
+
+/* ---------------- ciclo ---------------- */
+async function loadCycle() {
+  const t = S.trackers.find(x => x.type === 'cycle' && !x.archived);
+  if (!t) { S.cycle = []; return; }
+  const en = await S.db.byIndex('entries', 'trackerId', t.id);
+  S.cycle = en.filter(e => e.value?.period).map(e => e.date).sort();
+  S.cycleNo = new Set(en.filter(e => e.value?.period === false).map(e => e.date));
+}
+function cycleInfo(date) {
+  const days = S.cycle; if (!days.length) return null;
+  const set = new Set(days);
+  const starts = days.filter(d => !set.has(addDays(d, -1)));
+  const prev = starts.filter(s => s <= date); if (!prev.length) return null;
+  const start = prev[prev.length - 1];
+  const lens = []; for (let i = 1; i < starts.length; i++) { const l = diffDays(starts[i], starts[i - 1]); if (l >= 18 && l <= 60) lens.push(l); }
+  const L = lens.length ? Math.round(lens.slice(-6).reduce((a, b) => a + b, 0) / Math.min(lens.length, 6)) : 28;
+  const day = diffDays(date, start) + 1;
+  let bleed = 0; while (set.has(addDays(start, bleed))) bleed++;
+  const ov = L - 14;
+  let phase;
+  if (day <= Math.max(bleed, 1) || (day <= 5 && !S.cycleNo?.has(date) && ![...Array(day - 1).keys()].some(k => S.cycleNo?.has(addDays(start, k + 1))))) phase = 'menstrual';
+  else if (day < ov - 1) phase = 'folicular';
+  else if (day <= ov + 1) phase = 'ovulatoria';
+  else phase = 'lútea';
+  return { day, phase, L, estimated: !lens.length, late: day > L + 7 };
+}
+
+/* ---------------- etiquetas y personas ---------------- */
+function findTag(name) {
+  const n = norm(name);
+  for (const t of S.tags.values()) if (t.norm === n || (t.aliases || []).some(a => norm(a) === n)) return t;
+  return null;
+}
+async function ensureTag(name) {
+  const clean = name.replace(/\s+/g, ' ').trim(); if (!clean) return null;
+  let t = findTag(clean);
+  if (!t) { t = { id: uid(), name: clean, norm: norm(clean), categories: [], aliases: [], created: nowISO() }; await S.db.put('tags', t); S.tags.set(t.id, t); }
+  return t;
+}
+function tagSuggestions(q, exclude = []) {
+  const n = norm(q); if (!n) return [];
+  const res = [];
+  for (const t of S.tags.values()) {
+    if (exclude.includes(t.id)) continue;
+    const hit = t.norm.startsWith(n) ? 0 : t.norm.includes(n) ? 1 : (t.aliases || []).some(a => norm(a).includes(n)) ? 2 : -1;
+    if (hit >= 0) res.push([hit, t]);
+  }
+  return res.sort((a, b) => a[0] - b[0] || a[1].name.localeCompare(b[1].name)).slice(0, 8).map(x => x[1]);
+}
+const PERSON_RE = /@([\p{L}\p{N}_.\-]+)/gu;
+async function extractPeople(text) {
+  const ids = [];
+  for (const m of text.matchAll(PERSON_RE)) {
+    const raw = m[1].replace(/[.\-]+$/, ''); const n = norm(raw.replace(/_/g, ' '));
+    let p = [...S.people.values()].find(x => x.norm === n);
+    if (!p) { p = { id: uid(), name: raw.replace(/_/g, ' '), norm: n, created: nowISO() }; await S.db.put('people', p); S.people.set(p.id, p); }
+    if (!ids.includes(p.id)) ids.push(p.id);
+  }
+  return ids;
+}
+function richText(text) {
+  const frag = document.createDocumentFragment(); let last = 0;
+  for (const m of text.matchAll(PERSON_RE)) {
+    frag.append(text.slice(last, m.index));
+    frag.append(h('span', { class: 'person' }, '@' + m[1].replace(/_/g, ' ')));
+    last = m.index + m[0].length;
+  }
+  frag.append(text.slice(last)); return frag;
+}
+
+/* ---------------- sheets ---------------- */
+function openSheet(title, build, opts = {}) {
+  const layer = $('#layer');
+  const scrim = h('div', { class: 'scrim' });
+  const body = h('div', { class: 'sbody' });
+  const sheet = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': title },
+    h('div', { class: 'sh' }, h('h3', null, title), h('button', { class: 'iconbtn', 'aria-label': 'Cerrar', onclick: () => close() }, svgEl(ICON.close))), body);
+  const close = () => { sheet.classList.remove('on'); scrim.classList.remove('on'); setTimeout(() => { scrim.remove(); sheet.remove(); opts.onClose?.(); }, 250); };
+  scrim.onclick = close;
+  layer.append(scrim, sheet);
+  build(body, close);
+  requestAnimationFrame(() => { scrim.classList.add('on'); sheet.classList.add('on'); });
+  return close;
+}
+function confirmSheet(title, text, okLabel, danger = true) {
+  return new Promise(res => {
+    let answered = false;
+    openSheet(title, (b, close) => {
+      b.append(h('p', { style: 'margin:0;line-height:1.45' }, text),
+        h('button', { class: 'btn blk ' + (danger ? 'dan fill' : 'pri'), onclick: () => { answered = true; res(true); close(); } }, okLabel),
+        h('button', { class: 'btn blk', onclick: () => close() }, 'Cancelar'));
+    }, { onClose: () => { if (!answered) res(false); } });
+  });
+}
+function openFull(title, build) {
+  const layer = $('#layer');
+  const el = h('div', { class: 'full' });
+  const close = () => { el.remove(); };
+  el.append(h('div', { class: 'top' }, h('div', { class: 'top-in' }, h('div', { class: 'toprow' },
+    h('button', { class: 'iconbtn', 'aria-label': 'Volver', onclick: close }, svgEl(ICON.back)),
+    h('div', { style: 'flex:1;font:600 17px/1 var(--f-ui)' }, title)))));
+  const body = h('div', { class: 'wrap', style: 'display:flex;flex-direction:column;gap:10px;padding-top:12px' });
+  el.append(body); layer.append(el);
+  build(body, close);
+  return { el, body, close };
+}
+
+/* ---------------- render principal ---------------- */
+function render() {
+  const app = $('#app'); app.innerHTML = '';
+  const dt = h('input', { type: 'date', id: 'datepick', value: S.date, 'aria-label': 'Elegir fecha',
+    onchange: e => { if (e.target.value) goDate(e.target.value); } });
+  const header = h('header', { class: 'top' }, h('div', { class: 'top-in' },
+    h('div', { class: 'toprow' },
+      h('label', { class: 'datebtn' }, h('span', { class: 'd' }, fmtShort(S.date)), h('span', { class: 'w' }, DOW[dow(S.date)]), dt),
+      h('span', { class: 'saved', id: 'saved' }, 'Guardado'),
+      h('button', { class: 'iconbtn', 'aria-label': 'Ajustes', onclick: openSettings }, svgEl(ICON.gear))),
+    h('div', { class: 'week', id: 'week' }),
+    h('div', { class: 'weeknav' },
+      h('button', { onclick: () => goDate(addDays(S.date, -7)) }, '‹ Semana anterior'),
+      S.date !== todayStr() ? h('button', { class: 'todaylink', onclick: () => goDate(todayStr()) }, 'Ir a hoy') : h('span'),
+      h('button', { onclick: () => goDate(addDays(S.date, 7)) }, 'Semana siguiente ›'))));
+  const main = h('main', { class: 'wrap', id: 'main' });
+  app.append(header, main);
+  renderBanners(main);
+  renderSections(main);
+  refreshWeek();
+}
+async function goDate(d) { S.date = d; await loadDay(d); render(); window.scrollTo(0, 0); }
+
+async function refreshWeek() {
+  const w = $('#week'); if (!w) return;
+  const mon = mondayOf(S.date), today = todayStr();
+  const days = Array.from({ length: 7 }, (_, i) => addDays(mon, i));
+  const comps = await Promise.all(days.map(d => d <= today ? completeness(d) : null));
+  w.innerHTML = '';
+  days.forEach((d, i) => {
+    const c = comps[i];
+    const cls = !c ? '' : c.done === 0 ? '' : c.done >= c.total ? 'cf' : 'cp';
+    const lbl = !c ? 'futuro' : c.done === 0 ? 'sin registrar' : c.done >= c.total ? 'completo' : `${c.done} de ${c.total}`;
+    w.append(h('button', { class: `wd${d === S.date ? ' sel' : ''}${d === today ? ' today' : ''}${d > today ? ' future' : ''}`,
+      'aria-label': `${fmtHuman(d)}, ${lbl}`, onclick: () => goDate(d) },
+      h('span', { class: 'l' }, DOW1[dow(d)]), h('span', { class: 'n' }, +d.slice(8)), h('span', { class: 'c ' + cls })));
+  });
+}
+
+async function renderBanners(main) {
+  const box = h('div', { id: 'banners' }); main.append(box);
+  if (S.demo) box.append(h('div', { class: 'banner b-demo' }, h('span', { class: 't' }, h('b', null, 'Modo demo.'), ' Datos ficticios, separados de los tuyos.'),
+    h('button', { onclick: () => switchDemo(false) }, 'Salir')));
+  if (S.db.kind === 'mem') box.append(h('div', { class: 'banner b-warn' }, h('span', { class: 't' }, 'Este navegador no permite guardar datos. Lo que registres se perderá al cerrar.')));
+  if (!S.demo && S.db.kind === 'idb') {
+    const lb = S.meta.lastBackup;
+    const days = lb ? Math.floor((Date.now() - new Date(lb)) / 864e5) : null;
+    const hasData = (await S.db.all('entries')).length > 0;
+    if (hasData && (days == null || days > 7)) box.append(h('div', { class: 'banner b-warn' },
+      h('span', { class: 't' }, lb ? `Último backup hace ${days} días.` : 'Aún no has hecho ningún backup.'),
+      h('button', { onclick: () => exportJSON() }, 'Hacer backup')));
+  }
+  const today = todayStr();
+  if (S.date === today) {
+    const y = addDays(today, -1), c = await completeness(y);
+    if (c.done > 0 && c.done < c.total) box.append(h('div', { class: 'banner b-info' },
+      h('span', { class: 't' }, `Ayer quedó a medias (${c.done} de ${c.total}).`), h('button', { onclick: () => goDate(y) }, 'Completar')));
+  }
+}
+
+function renderSections(main) {
+  const groups = new Map(S.meta.sections.map(s => [s.id, []]));
+  for (const t of activeTrackers()) { if (!groups.has(t.section)) groups.set(t.section, []); groups.get(t.section).push(t); }
+  for (const sec of S.meta.sections) {
+    const list = groups.get(sec.id) || [];
+    if (sec.id !== 'registro' && !list.length) continue;
+    const closed = !!S.meta.collapsed[sec.id];
+    const body = h('div', { class: 'secb' });
+    const meta = h('span', { class: 'meta', id: 'secmeta-' + sec.id });
+    const el = h('section', { class: 'sec' + (closed ? ' closed' : ''), id: 'sec-' + sec.id },
+      h('button', { class: 'sech', 'aria-expanded': String(!closed), onclick: async e => {
+        const c = el.classList.toggle('closed'); e.currentTarget.setAttribute('aria-expanded', String(!c));
+        S.meta.collapsed[sec.id] = c; await saveMeta(); } },
+        h('h2', null, sec.name), meta, h('span', { class: 'chev', html: ICON.chev })), body);
+    if (sec.id === 'registro') body.append(renderLog());
+    if (list.length > 1 && list.every(t => t.type === 'counter' && !t.config.goal)) body.classList.add('grid2');
+    for (const t of list) body.append(renderTracker(t));
+    main.append(el);
+    updateSecMeta(sec.id);
+  }
+  // trackers en secciones que ya no existen
+  for (const [sid, list] of groups) if (!S.meta.sections.find(s => s.id === sid) && list.length) {
+    const body = h('div', { class: 'secb' }); list.forEach(t => body.append(renderTracker(t)));
+    main.append(h('section', { class: 'sec' }, h('div', { class: 'sech' }, h('h2', null, 'Otros')), body));
+  }
+}
+function updateSecMeta(sid) {
+  const m = $('#secmeta-' + sid); if (!m) return;
+  if (sid === 'registro') { const open = S.day.items.filter(i => i.type === 'task' && i.status === 'open').length; m.textContent = open ? `${open} pendiente${open > 1 ? 's' : ''}` : ''; return; }
+  const list = activeTrackers().filter(t => t.section === sid);
+  const d = list.filter(t => isRecorded(t, S.day.entries, S.day.events)).length;
+  m.textContent = `${d}/${list.length}`;
+}
+function refreshTracker(id) {
+  const t = trackerById(id); if (!t) return;
+  const old = $('#t-' + CSS.escape(id)); if (!old) return;
+  const nu = renderTracker(t); old.replaceWith(nu);
+  updateSecMeta(t.section);
+}
+
+/* ---------------- trackers ---------------- */
+function card(t, body, aux) {
+  const done = isRecorded(t, S.day.entries, S.day.events);
+  const hasVal = S.day.entries.has(t.id) || (t.type === 'list' && S.day.events.some(e => e.trackerId === t.id));
+  return h('div', { class: 'card trk' + (done ? ' done' : ''), id: 't-' + t.id },
+    h('div', { class: 'hd' }, h('span', { class: 'rec', title: done ? 'Registrado' : 'Sin registrar' }), h('span', { class: 'nm' }, t.name),
+      aux ? h('span', { class: 'aux' }, aux) : null,
+      hasVal && t.type !== 'list' ? h('button', { class: 'clear', onclick: () => setEntry(t.id, null), 'aria-label': 'Borrar registro de ' + t.name }, 'Borrar') : null),
+    h('div', { class: 'bd' }, body));
+}
+function renderTracker(t) {
+  try {
+    const R = RENDER[t.type]; if (!R) return card(t, h('div', { class: 'empty' }, 'Tipo no soportado: ' + t.type));
+    return R(t);
+  } catch (e) { console.error(e); return card(t, h('div', { class: 'empty' }, 'Error al mostrar este tracker.')); }
+}
+function scaleColor(t, i) {
+  const { min = 0, max = 5, colors } = t.config; if (!colors) return null;
+  let p = (i - min) / (max - min); if (colors === 'bad-high') p = 1 - p;
+  return `var(--s${Math.round(p * 5)})`;
+}
+function face(level) { // level 0..4
+  const curve = [-5, -2.5, 0, 2.5, 5][level];
+  const brow = level === 0 ? '<path d="M8.5 8.8l2.2.9M15.5 8.8l-2.2.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' : '';
+  return `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="10.5" r="1.2" fill="currentColor"/><circle cx="15" cy="10.5" r="1.2" fill="currentColor"/>${brow}<path d="M7.5 ${15.5 - curve / 3} Q12 ${15.5 + curve} 16.5 ${15.5 - curve / 3}" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+}
+const MOOD_LABELS = ['Muy mal', 'Mal', 'Normal', 'Bien', 'Muy bien'];
+function scaleRow(t, cur, onPick) {
+  const { min = 0, max = 5, style } = t.config;
+  const row = h('div', { class: 'scale', role: 'radiogroup', 'aria-label': t.name });
+  for (let i = min; i <= max; i++) {
+    const on = cur === i, col = scaleColor(t, i);
+    const b = h('button', { class: 'sc' + (on ? ' on' : '') + (style === 'faces' ? ' face' : ''), role: 'radio', 'aria-checked': String(on),
+      'aria-label': style === 'faces' ? MOOD_LABELS[i - min] || String(i) : String(i), onclick: () => onPick(on ? null : i) });
+    if (style === 'faces') b.innerHTML = face(Math.round((i - min) / (max - min) * 4));
+    else { b.append(String(i)); if (col) { b.append(h('span', { class: 'sw', style: `background:${col}` })); if (on) b.style.background = col; } else if (on) { b.style.background = 'var(--accent)'; b.style.color = 'var(--accent-ink)'; } }
+    row.append(b);
+  }
+  return row;
+}
+function segmented(options, cur, onPick, label) {
+  return h('div', { class: 'seg', role: 'radiogroup', 'aria-label': label || '' }, options.map(([v, l]) =>
+    h('button', { class: cur === v ? 'on' : '', role: 'radio', 'aria-checked': String(cur === v), onclick: () => onPick(cur === v ? null : v) }, l)));
+}
+function timeInput(value, onChange, label, id) {
+  return h('input', { type: 'time', class: 'inp', value: value || '', 'aria-label': label, id, onchange: e => onChange(e.target.value || null) });
+}
+
+const BRISTOL = [
+  [1, 'Bolitas duras separadas', 'a'], [2, 'Salchicha grumosa', 'a'], [3, 'Salchicha con grietas', 'g'], [4, 'Lisa y blanda', 'g'],
+  [5, 'Trozos blandos', 'r'], [6, 'Pastosa, bordes irregulares', 'r'], [7, 'Líquida', 'r'],
+];
+function bristolIcon(n) {
+  const c = 'currentColor';
+  const s = {
+    1: `<circle cx="5" cy="9" r="2.6" fill="${c}"/><circle cx="12" cy="7" r="2.6" fill="${c}"/><circle cx="19" cy="10" r="2.6" fill="${c}"/>`,
+    2: `<path d="M3 9c0-3 3-4 5-3 2-2 5-2 7 0 2-1 6 0 6 3s-3 4-6 3c-2 2-5 2-7 0-2 1-5 0-5-3z" fill="${c}"/>`,
+    3: `<rect x="2" y="5" width="20" height="8" rx="4" fill="${c}"/><path d="M8 5v3M13 13v-3M17 5v2" stroke="var(--card2)" stroke-width="1.4"/>`,
+    4: `<path d="M3 11c3-6 7 2 10-3s6-2 8 0" stroke="${c}" stroke-width="4" stroke-linecap="round" fill="none"/>`,
+    5: `<ellipse cx="6" cy="9" rx="3.6" ry="2.6" fill="${c}"/><ellipse cx="13.5" cy="10" rx="3.2" ry="2.4" fill="${c}"/><ellipse cx="19.5" cy="8" rx="2.6" ry="2" fill="${c}"/>`,
+    6: `<path d="M2 11c1-4 4-1 5-4s4 0 5-2 4 2 5 1 4 1 5 4c-2 2-5 1-7 2s-6 1-8 0-4 1-5-1z" fill="${c}"/>`,
+    7: `<path d="M2 10c2-2 4 2 6 0s4 2 6 0 4 2 6 0" stroke="${c}" stroke-width="1.8" fill="none"/><path d="M4 14c2-1.5 4 1.5 6 0s4 1.5 6 0" stroke="${c}" stroke-width="1.5" fill="none" opacity=".6"/>`,
+  }[n];
+  return `<svg viewBox="0 0 24 18">${s}</svg>`;
+}
+
+/* Componente de entrada de etiquetas: escribe "a + b, c" y Enter */
+function tagInput(ids, onChange, placeholder, idKey) {
+  const wrap = h('div', { class: 'tagin' });
+  const chips = h('div', { class: 'chips' });
+  const sugg = h('div', { class: 'sugg' });
+  const input = h('input', { class: 'inp', id: idKey, placeholder: placeholder || 'p. ej. café + tostada', autocomplete: 'off', autocapitalize: 'none', enterkeyhint: 'done' });
+  const add = h('button', { class: 'addbtn', 'aria-label': 'Añadir' }, 'Añadir');
+  const commit = async () => {
+    const parts = input.value.split(/[+,;\n]/).map(s => s.trim()).filter(Boolean);
+    if (!parts.length) return;
+    const next = [...ids];
+    for (const p of parts) { const t = await ensureTag(p); if (t && !next.includes(t.id)) next.push(t.id); }
+    input.value = ''; onChange(next);
+  };
+  const showSugg = () => {
+    const last = input.value.split(/[+,;]/).pop();
+    sugg.innerHTML = '';
+    for (const t of tagSuggestions(last, ids)) sugg.append(h('button', { class: 'chip sm', onmousedown: e => e.preventDefault(), onclick: () => {
+      const parts = input.value.split(/[+,;]/); parts[parts.length - 1] = ' ' + t.name; input.value = parts.join(' +').replace(/^\s*\+?\s*/, ''); commit(); } }, t.name));
+  };
+  input.addEventListener('input', showSugg);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); commit(); } });
+  add.onclick = commit;
+  for (const id of ids) {
+    const t = S.tags.get(id);
+    chips.append(h('span', { class: 'chip sm', style: 'padding-right:2px' },
+      t?.categories?.length ? h('span', { class: 'cdot', title: t.categories.map(c => S.meta.categories.find(x => x.id === c)?.name).join(', ') }) : null,
+      h('button', { onclick: () => t && openTagEditor(t, () => onChange(ids)), style: 'min-height:30px' }, t ? t.name : '¿?'),
+      h('button', { class: 'x', 'aria-label': 'Quitar ' + (t?.name || ''), style: 'min-width:30px;min-height:30px', onclick: () => onChange(ids.filter(x => x !== id)) }, '×')));
+  }
+  wrap.append(chips, h('div', { class: 'row' }, input, add), sugg);
+  return wrap;
+}
+
+const RENDER = {
+  scale(t) {
+    const v = val(t.id);
+    return card(t, scaleRow(t, v, x => setEntry(t.id, x)), v != null && t.config.style === 'faces' ? MOOD_LABELS[v - (t.config.min ?? 1)] : null);
+  },
+  bool(t) {
+    const v = val(t.id); const yes = v?.v === true;
+    const body = [segmented([[true, 'Sí'], [false, 'No']], v ? v.v : undefined, x => setEntry(t.id, x == null ? null : { ...(v || {}), v: x }), t.name)];
+    if (yes && t.config.time) body.push(h('div', { class: 'row' }, h('span', { class: 'lbl' }, 'Hora (opcional)'),
+      h('div', { style: 'flex:1' }, timeInput(v.time, x => setEntry(t.id, { ...v, time: x }), 'Hora de ' + t.name))));
+    if (yes && t.config.details) for (const d of t.config.details) {
+      if (d.kind === 'number') body.push(h('div', { class: 'row' }, h('span', { class: 'lbl', style: 'width:72px' }, d.label),
+        h('input', { class: 'inp', style: 'flex:1', type: 'text', inputmode: 'numeric', value: v[d.key] ?? '', placeholder: d.unit || '',
+          onchange: e => { const n = parseFloat(e.target.value.replace(',', '.')); setEntry(t.id, { ...v, [d.key]: isNaN(n) ? null : n }); } }),
+        d.unit ? h('span', { class: 'cunit' }, d.unit) : null));
+      else body.push(h('div', { class: 'tfield' }, h('span', { class: 'lbl' }, d.label),
+        d.suggestions ? h('div', { class: 'chips' }, d.suggestions.map(s => h('button', { class: 'chip sm' + (v[d.key] === s ? ' on' : ''), onclick: () => setEntry(t.id, { ...v, [d.key]: v[d.key] === s ? null : s }) }, s))) : null,
+        h('input', { class: 'inp', value: d.suggestions?.includes(v[d.key]) ? '' : (v[d.key] || ''), placeholder: 'Otro…', onchange: e => setEntry(t.id, { ...v, [d.key]: e.target.value.trim() || null }) })));
+    }
+    const sug = eventSuggestion(t, v);
+    if (sug) body.unshift(sug);
+    return card(t, body, yes && v.time ? v.time : null);
+  },
+  number(t) {
+    const v = val(t.id);
+    return card(t, h('div', { class: 'row' }, h('input', { class: 'inp', style: 'flex:1', inputmode: 'decimal', type: 'text', value: v ?? '', placeholder: '—',
+      onchange: e => { const n = parseFloat(e.target.value.replace(',', '.')); setEntry(t.id, isNaN(n) ? null : n); } }),
+      t.config.unit ? h('span', { class: 'cunit' }, t.config.unit) : null));
+  },
+  counter(t) {
+    const v = val(t.id); const goal = t.config.goal;
+    const body = [h('div', { class: 'counter' },
+      h('button', { class: 'cbtn', 'aria-label': 'Restar', onclick: () => setEntry(t.id, Math.max(0, (v ?? 1) - 1)) }, '−'),
+      h('span', { class: 'cval' + (v == null ? ' nil' : ''), 'aria-live': 'polite' }, v ?? '—'),
+      h('button', { class: 'cbtn plus', 'aria-label': 'Sumar', onclick: () => setEntry(t.id, (v ?? 0) + 1) }, '+'),
+      t.config.unit ? h('span', { class: 'cunit' }, t.config.unit) : null,
+      goal ? h('div', { class: 'glass', 'aria-hidden': 'true' }, Array.from({ length: Math.max(goal, v || 0) }, (_, i) => h('i', { class: i < (v || 0) ? 'f' : '' }))) : null)];
+    return card(t, body, goal ? (v >= goal ? h('span', { class: 'goal' }, 'Objetivo cumplido') : `${v ?? 0} / ${goal}`) : v == null ? 'sin registrar' : null);
+  },
+  multi(t) {
+    const v = val(t.id) || []; const ex = t.config.exclusive || [];
+    const toggle = id => {
+      let next = v.includes(id) ? v.filter(x => x !== id) : [...v, id];
+      if (!v.includes(id)) next = ex.includes(id) ? [id] : next.filter(x => !ex.includes(x));
+      setEntry(t.id, next.length ? next : null);
+    };
+    const opts = t.config.options.filter(o => !o.archived || v.includes(o.id));
+    return card(t, h('div', { class: 'chips' }, opts.map(o => h('button', { class: 'chip' + (v.includes(o.id) ? ' on' : ''), 'aria-pressed': String(v.includes(o.id)), onclick: () => toggle(o.id) }, o.label))));
+  },
+  checklist(t) {
+    const v = val(t.id); const cur = v || {};
+    const opts = t.config.options.filter(o => !o.archived || cur[o.id]);
+    const active = t.config.options.filter(o => !o.archived);
+    const n = active.filter(o => cur[o.id]).length;
+    const body = [h('div', { class: 'chips' }, opts.map(o => h('button', { class: 'chip' + (cur[o.id] ? ' on' : ''), 'aria-pressed': String(!!cur[o.id]),
+      onclick: () => setEntry(t.id, { ...cur, [o.id]: !cur[o.id] }) }, o.label)))];
+    const actions = h('div', { class: 'row' });
+    if (t.config.allButton) actions.append(h('button', { class: 'chip ghost sm', onclick: () => { const all = {}; active.forEach(o => all[o.id] = true); setEntry(t.id, all); } }, 'Todos tomados'));
+    if (!v) actions.append(h('button', { class: 'chip ghost sm', onclick: () => setEntry(t.id, {}) }, 'Ninguno'));
+    if (actions.childNodes.length) body.push(actions);
+    return card(t, body, v ? `${n}/${active.length}` : null);
+  },
+  tags(t) {
+    const v = val(t.id) || [];
+    return card(t, tagInput(v, ids => setEntry(t.id, ids.length ? ids : null), null, 'tag-' + t.id));
+  },
+  time(t) { return card(t, timeInput(val(t.id), x => setEntry(t.id, x), t.name, 'time-' + t.id)); },
+  note(t) {
+    const v = val(t.id) || '';
+    const ta = h('textarea', { class: 'inp', id: 'note-' + t.id, placeholder: 'Escribe…' }); ta.value = v;
+    let tm; ta.addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => saveQuiet(t.id, ta.value.trim() || null), 600); });
+    ta.addEventListener('blur', () => { clearTimeout(tm); saveQuiet(t.id, ta.value.trim() || null); });
+    return card(t, ta);
+  },
+  list(t) {
+    const evs = S.day.events.filter(e => e.trackerId === t.id);
+    const none = val(t.id)?.none === true;
+    const bristol = t.config.kind === 'bristol';
+    const body = [];
+    if (evs.length) body.push(h('div', { class: 'blist' }, evs.map(e => {
+      const b = bristol ? BRISTOL[(e.attrs?.bristol || 4) - 1] : null;
+      return h('div', { class: 'bent' },
+        bristol ? h('span', { class: 'bt bc-' + b[2], html: bristolIcon(b[0]) + ' ' }) : null,
+        bristol ? h('span', { class: 'bt' }, 'Tipo ' + b[0]) : null,
+        h('span', { class: 'bd2' }, bristol ? b[1] : (e.attrs?.text || '')),
+        h('input', { type: 'time', value: e.time || '', 'aria-label': 'Hora', onchange: ev => updateEvent(e, { time: ev.target.value || null }) }),
+        h('button', { class: 'mini', 'aria-label': 'Eliminar', onclick: () => deleteEvent(e), html: ICON.close }));
+    })));
+    if (bristol) body.push(h('div', { class: 'bgrid' }, BRISTOL.map(([n, d, c]) =>
+      h('button', { class: 'bb bc-' + c, 'aria-label': `Añadir tipo ${n}: ${d}`, title: d, onclick: () => addEvent(t, { bristol: n }) }, h('span', { html: bristolIcon(n) }), String(n)))));
+    else {
+      const inp = h('input', { class: 'inp', placeholder: 'Nueva entrada', enterkeyhint: 'done' });
+      const go = () => { if (inp.value.trim()) addEvent(t, { text: inp.value.trim() }); };
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+      body.push(h('div', { class: 'row', style: 'flex-wrap:nowrap' }, inp, h('button', { class: 'addbtn', onclick: go }, 'Añadir')));
+    }
+    if (!evs.length) body.push(h('div', { class: 'row' }, h('button', { class: 'chip sm' + (none ? ' on' : ''), 'aria-pressed': String(none), onclick: () => setEntry(t.id, none ? null : { none: true }) }, 'Ninguna hoy')));
+    if (bristol) body.push(h('span', { class: 'lbl' }, 'Pulsa un tipo para añadir una deposición. La hora es opcional.'));
+    return card(t, body, evs.length ? `${evs.length} registrada${evs.length > 1 ? 's' : ''}` : none ? 'Ninguna' : null);
+  },
+  sleep(t) {
+    const v = val(t.id) || {};
+    const upd = patch => { const n = { ...v, ...patch }; Object.keys(n).forEach(k => n[k] == null && delete n[k]); setEntry(t.id, Object.keys(n).length ? n : null); };
+    const calc = sleepMinutes(v);
+    const hours = v.hoursOverride != null ? v.hoursOverride * 60 : calc;
+    const prevDay = DOW[dow(addDays(S.date, -1))];
+    const ovr = h('div', { class: 'row', hidden: v.hoursOverride == null && !t._editH });
+    const ovIn = h('input', { class: 'inp', style: 'width:110px', inputmode: 'decimal', type: 'text', value: v.hoursOverride != null ? String(v.hoursOverride).replace('.', ',') : '', placeholder: 'p. ej. 6,5',
+      onchange: e => { const n = parseFloat(e.target.value.replace(',', '.')); upd({ hoursOverride: isNaN(n) ? null : Math.min(24, Math.max(0, n)) }); } });
+    ovr.append(h('span', { class: 'lbl' }, 'Horas reales'), ovIn, h('span', { class: 'cunit' }, 'h'),
+      v.hoursOverride != null ? h('button', { class: 'link', onclick: () => upd({ hoursOverride: null }) }, 'Usar cálculo') : null);
+    return card(t, [
+      h('div', { class: 'sleepgrid' },
+        h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, `Me acosté (noche del ${prevDay})`), timeInput(v.bed, x => upd({ bed: x }), 'Hora de acostarme', 'sleep-bed')),
+        h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Me levanté'), timeInput(v.wake, x => upd({ wake: x }), 'Hora de levantarme', 'sleep-wake'))),
+      h('div', { class: 'hours' }, h('b', null, fmtHours(hours)),
+        h('span', { class: 'lbl' }, v.hoursOverride != null ? 'corregido a mano' : calc != null ? 'calculado' : 'indica las dos horas'),
+        h('button', { class: 'link', onclick: () => { ovr.hidden = false; ovIn.focus(); } }, 'Me desperté por la noche')),
+      ovr,
+      h('div', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Calidad (0 muy mal · 5 excelente)'), scaleRow(t, v.quality, x => upd({ quality: x }))),
+    ], v.wake ? `☀ ${v.wake}` : null);
+  },
+  meals(t) {
+    const v = val(t.id) || {};
+    const upd = (k, x) => { const n = { ...v }; if (x === undefined) delete n[k]; else n[k] = x; setEntry(t.id, Object.keys(n).length ? n : null); };
+    return card(t, t.config.meals.filter(m => !m.archived).map(m => {
+      const cur = v[m.id]; const skip = cur === 'skip';
+      return h('div', { class: 'meal' },
+        h('div', { class: 'mh' }, h('span', { class: 'mn' }, m.label),
+          h('button', { class: 'chip sm' + (skip ? ' on' : ''), 'aria-pressed': String(skip), onclick: () => upd(m.id, skip ? undefined : 'skip') }, skip ? 'No he comido' : '—')),
+        skip ? null : tagInput(Array.isArray(cur) ? cur : [], ids => upd(m.id, ids.length ? ids : undefined), m.id === 'desayuno' ? 'café + tostada' : 'alimento + alimento', 'meal-' + m.id));
+    }), 'Usa + para separar');
+  },
+  cycle(t) {
+    const v = val(t.id) || {};
+    const upd = patch => { const n = { ...v, ...patch }; Object.keys(n).forEach(k => n[k] == null && delete n[k]); setEntry(t.id, Object.keys(n).length ? n : null); };
+    const ci = cycleInfo(S.date);
+    const body = [
+      h('div', { class: 'row' }, h('span', { class: 'lbl', style: 'width:84px' }, 'Regla'), h('div', { style: 'flex:1' }, segmented([[true, 'Sí'], [false, 'No']], v.period, x => upd({ period: x, flow: x ? v.flow : null }), 'Regla'))),
+    ];
+    if (v.period) body.push(h('div', { class: 'row' }, h('span', { class: 'lbl', style: 'width:84px' }, 'Flujo'),
+      h('div', { style: 'flex:1' }, segmented([['leve', 'Leve'], ['medio', 'Medio'], ['abundante', 'Abundante']], v.flow, x => upd({ flow: x }), 'Flujo'))));
+    body.push(h('div', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Dolor (0–5)'), scaleRow({ ...t, config: { min: 0, max: 5, colors: 'bad-high' } }, v.pain, x => upd({ pain: x }))));
+    body.push(h('div', { class: 'cycleinfo' }, ci
+      ? [h('b', null, `Día ${ci.day}`), ` del ciclo · fase ${ci.phase} (aprox.)`, ci.estimated ? ' · duración estimada 28 días hasta tener 2 ciclos' : ` · ciclo medio ${ci.L} días`, ci.late ? ' · más largo de lo habitual' : '']
+      : 'Marca el primer día de regla para calcular el día del ciclo.'));
+    return card(t, body);
+  },
+};
+async function saveQuiet(id, value) {
+  const cur = val(id) ?? null; if (cur === value) return;
+  const key = [S.date, id];
+  if (value == null) { await S.db.del('entries', key); S.day.entries.delete(id); }
+  else { const e = { date: S.date, trackerId: id, value, updated: nowISO() }; await S.db.put('entries', e); S.day.entries.set(id, e); }
+  flashSaved(); updateSecMeta(trackerById(id)?.section); refreshWeek();
+  const c = $('#t-' + CSS.escape(id)); if (c) c.classList.toggle('done', value != null);
+}
+function sleepMinutes(v) {
+  const b = hmToMin(v.bed), w = hmToMin(v.wake); if (b == null || w == null) return null;
+  let m = w - b; if (m <= 0) m += 1440; return m;
+}
+function eventSuggestion(t, v) {
+  const kws = t.config.suggestKeywords; if (!kws || v?.v === true) return null;
+  const ev = S.day.items.find(i => i.type === 'event' && i.status !== 'cancelled' && kws.some(k => norm(i.text).includes(k)));
+  if (!ev) return null;
+  return h('div', { class: 'sugbar' }, h('span', { class: 't' }, `Hoy tienes «${ev.text}». ¿Lo hiciste?`),
+    h('button', { onclick: () => setEntry(t.id, { v: true, tipo: (t.config.details?.[0]?.suggestions || []).find(s => norm(ev.text).includes(norm(s))) || null }) }, 'Marcar'));
+}
+async function addEvent(t, attrs) {
+  const e = { id: uid(), date: S.date, trackerId: t.id, time: null, attrs, created: nowISO() };
+  await S.db.put('events', e); S.day.events.push(e);
+  if (val(t.id)?.none) { await S.db.del('entries', [S.date, t.id]); S.day.entries.delete(t.id); }
+  flashSaved(); refreshTracker(t.id); refreshWeek();
+}
+async function updateEvent(e, patch) { Object.assign(e, patch); await S.db.put('events', e); flashSaved(); }
+async function deleteEvent(e) {
+  await S.db.del('events', e.id); S.day.events = S.day.events.filter(x => x.id !== e.id);
+  flashSaved(); refreshTracker(e.trackerId); refreshWeek();
+}
+
+/* ---------------- registro rápido (tareas, eventos, notas) ---------------- */
+const BULLET = { task: { open: '•', done: '×', cancelled: '•' }, event: '○', note: '–' };
+let logType = 'task';
+function renderLog() {
+  const box = h('div', { class: 'card', id: 'log' });
+  const list = h('div', { class: 'log' });
+  const items = S.day.items;
+  if (!items.length && !S.day.ghosts.length) list.append(h('div', { class: 'empty' }, 'Sin tareas ni notas. Añade abajo; usa @nombre para personas.'));
+  for (const it of items) list.append(logRow(it));
+  for (const g of S.day.ghosts) list.append(h('div', { class: 'li mig' }, h('span', { class: 'bul' }, '>'),
+    h('span', { class: 'tx' }, richText(g.text), h('span', { class: 'lbl' }, '  → ' + (g.dateType === 'day' ? fmtShort(g.date) : g.dateType === 'month' ? MONTHS[+g.date.slice(5, 7) - 1] : 'pendientes')))));
+  const input = h('input', { class: 'inp', id: 'loginput', placeholder: logType === 'task' ? 'Nueva tarea' : logType === 'event' ? 'Nuevo evento (p. ej. Gym)' : 'Nota: cómo estás, con quién has quedado…', autocomplete: 'off', enterkeyhint: 'done' });
+  const psug = h('div', { class: 'sugg' });
+  input.addEventListener('input', () => {
+    psug.innerHTML = ''; const m = input.value.match(/@([\p{L}\p{N}_.\-]*)$/u); if (!m) return;
+    const n = norm(m[1]);
+    [...S.people.values()].filter(p => p.norm.startsWith(n) || norm(p.name.replace(/\s/g, '_')).startsWith(n)).slice(0, 8).forEach(p =>
+      psug.append(h('button', { class: 'chip sm', onmousedown: e => e.preventDefault(), onclick: () => { input.value = input.value.replace(/@[\p{L}\p{N}_.\-]*$/u, '@' + p.name.replace(/\s+/g, '_') + ' '); psug.innerHTML = ''; input.focus(); } }, '@' + p.name)));
+  });
+  const go = async () => { const tx = input.value.trim(); if (!tx) return; await addItem(logType, tx); input.value = ''; psug.innerHTML = ''; rerenderLog(true); };
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+  box.append(list, h('div', { class: 'logadd' },
+    segmented([['task', '• Tarea'], ['event', '○ Evento'], ['note', '– Nota']], logType, x => { logType = x || logType; rerenderLog(true); }, 'Tipo de entrada'),
+    h('div', { class: 'row', style: 'flex-wrap:nowrap' }, input, h('button', { class: 'addbtn', onclick: go }, 'Añadir')), psug));
+  return box;
+}
+function logRow(it) {
+  const b = it.type === 'task' ? BULLET.task[it.status] || '•' : BULLET[it.type];
+  const cls = 'li' + (it.status === 'done' ? ' done' : '') + (it.status === 'cancelled' ? ' cancel' : '');
+  return h('div', { class: cls },
+    h('button', { class: 'bul', 'aria-label': it.type === 'task' ? (it.status === 'done' ? 'Marcar pendiente' : 'Marcar hecha') : 'Editar',
+      onclick: () => it.type === 'task' && it.status !== 'cancelled' ? toggleTask(it) : editItem(it) }, b),
+    h('button', { class: 'tx', onclick: () => editItem(it) }, richText(it.text)),
+    it.time ? h('span', { class: 'tm' }, it.time) : null);
+}
+function rerenderLog(focus) {
+  const old = $('#log'); if (!old) return; old.replaceWith(renderLog()); updateSecMeta('registro');
+  if (focus) $('#loginput')?.focus();
+}
+async function addItem(type, text, extra = {}) {
+  const people = await extractPeople(text);
+  const it = { id: uid(), type, text, dateType: 'day', date: S.date, status: 'open', collection: null, time: null, people, trail: [], fields: {},
+    created: nowISO(), updated: nowISO(), order: Date.now(), ...extra };
+  await S.db.put('items', it); S.day.items.push(it); flashSaved();
+  if (type === 'event') activeTrackers().filter(t => t.config.suggestKeywords).forEach(t => refreshTracker(t.id));
+  return it;
+}
+async function saveItem(it) { it.updated = nowISO(); await S.db.put('items', it); flashSaved(); }
+async function toggleTask(it) { it.status = it.status === 'done' ? 'open' : 'done'; await saveItem(it); rerenderLog(); }
+function editItem(it) {
+  openSheet(it.type === 'task' ? 'Tarea' : it.type === 'event' ? 'Evento' : 'Nota', (b, close) => {
+    const ta = h('textarea', { class: 'inp', id: 'edit-text' }); ta.value = it.text;
+    let type = it.type;
+    const segBox = h('div');
+    const drawSeg = () => { segBox.innerHTML = ''; segBox.append(segmented([['task', '• Tarea'], ['event', '○ Evento'], ['note', '– Nota']], type, x => { type = x || type; drawSeg(); }, 'Tipo')); };
+    drawSeg();
+    const tm = h('input', { type: 'time', class: 'inp', value: it.time || '', id: 'edit-time' });
+    b.append(segBox, ta, h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Hora (opcional)'), tm),
+      h('button', { class: 'btn pri blk', onclick: async () => {
+        const tx = ta.value.trim(); if (!tx) return;
+        it.text = tx; it.type = type; it.time = tm.value || null; it.people = await extractPeople(tx);
+        await saveItem(it); close(); rerenderLog(); activeTrackers().filter(t => t.config.suggestKeywords).forEach(t => refreshTracker(t.id));
+      } }, 'Guardar'));
+    if (it.type === 'task') {
+      b.append(h('div', { class: 'gh' }, 'Migrar'));
+      const dIn = h('input', { type: 'date', class: 'inp', value: addDays(S.date, 1), id: 'mig-date' });
+      const mIn = h('input', { type: 'month', class: 'inp', value: addDays(S.date, 32).slice(0, 7), id: 'mig-month' });
+      b.append(
+        h('button', { class: 'btn blk', onclick: async () => { await migrate(it, 'day', addDays(S.date, 1)); close(); } }, '> A mañana'),
+        h('div', { class: 'row', style: 'flex-wrap:nowrap' }, dIn, h('button', { class: 'btn', onclick: async () => { if (dIn.value) { await migrate(it, 'day', dIn.value); close(); } } }, 'Mover')),
+        h('div', { class: 'row', style: 'flex-wrap:nowrap' }, mIn, h('button', { class: 'btn', onclick: async () => { if (mIn.value) { await migrate(it, 'month', mIn.value); close(); } } }, 'Al mes')),
+        h('button', { class: 'btn blk', onclick: async () => { await migrate(it, 'none', null); close(); } }, 'A tareas pendientes generales'),
+        h('button', { class: 'btn blk', onclick: async () => { it.status = it.status === 'cancelled' ? 'open' : 'cancelled'; await saveItem(it); close(); rerenderLog(); } }, it.status === 'cancelled' ? 'Reactivar tarea' : 'Tachar (ya no es relevante)'));
+    }
+    b.append(h('button', { class: 'btn dan blk', onclick: async () => {
+      if (!(await confirmSheet('Eliminar', 'Se eliminará esta entrada. Si es una tarea que ya no importa, mejor tácharla para conservar el historial.', 'Eliminar'))) return;
+      await S.db.del('items', it.id); S.day.items = S.day.items.filter(x => x.id !== it.id); flashSaved(); close(); rerenderLog();
+    } }, 'Eliminar'));
+  });
+}
+async function migrate(it, dateType, date) {
+  const from = it.date;
+  it.history = [...(it.history || []), { at: nowISO(), from: { dateType: it.dateType, date: it.date }, to: { dateType, date } }];
+  if (it.dateType === 'day' && from && !it.trail.includes(from)) it.trail = [...it.trail, from];
+  it.dateType = dateType; it.date = date; it.collection = dateType === 'none' ? 'backlog' : null; it.status = 'open';
+  await saveItem(it);
+  S.day.items = S.day.items.filter(x => x.id !== it.id);
+  if (dateType === 'day' && date === S.date) S.day.items.push(it); else if (it.trail.includes(S.date)) S.day.ghosts.push(it);
+  rerenderLog(); toast(dateType === 'day' ? `Migrada al ${fmtShort(date)}` : dateType === 'month' ? `Migrada a ${MONTHS[+date.slice(5, 7) - 1]}` : 'Movida a pendientes generales');
+}
+
+/* ---------------- etiquetas: editor ---------------- */
+function openTagEditor(t, after) {
+  openSheet('Etiqueta', (b, close) => {
+    const name = h('input', { class: 'inp', value: t.name, id: 'tag-name' });
+    const aliases = h('input', { class: 'inp', value: (t.aliases || []).join(', '), placeholder: 'p. ej. cafe con leche, cortado', id: 'tag-alias' });
+    let cats = [...(t.categories || [])];
+    const catBox = h('div', { class: 'chips' });
+    const drawCats = () => { catBox.innerHTML = ''; S.meta.categories.forEach(c => catBox.append(h('button', { class: 'chip sm' + (cats.includes(c.id) ? ' on' : ''), onclick: () => { cats = cats.includes(c.id) ? cats.filter(x => x !== c.id) : [...cats, c.id]; drawCats(); } }, c.name))); };
+    drawCats();
+    b.append(h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Nombre'), name),
+      h('div', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Categorías (para agrupar en el análisis)'), catBox),
+      h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Alias (separados por comas)'), aliases),
+      h('button', { class: 'btn pri blk', onclick: async () => {
+        const nn = name.value.trim(); if (!nn) return;
+        const clash = findTag(nn); if (clash && clash.id !== t.id) { toast(`Ya existe «${clash.name}». Usa Fusionar.`); return; }
+        Object.assign(t, { name: nn, norm: norm(nn), categories: cats, aliases: aliases.value.split(',').map(s => s.trim()).filter(Boolean) });
+        await S.db.put('tags', t); flashSaved(); close(); after?.();
+      } }, 'Guardar'));
+    const others = [...S.tags.values()].filter(x => x.id !== t.id).sort((a, c) => a.name.localeCompare(c.name));
+    if (others.length) {
+      const sel = h('select', { class: 'inp', id: 'tag-merge' }, h('option', { value: '' }, 'Elegir etiqueta destino…'), others.map(o => h('option', { value: o.id }, o.name)));
+      b.append(h('div', { class: 'gh' }, 'Fusionar'), h('p', { class: 'note' }, `Sustituye «${t.name}» por otra etiqueta en todos los días (útil para erratas). Su nombre pasa a ser alias.`),
+        h('div', { class: 'row', style: 'flex-wrap:nowrap' }, sel, h('button', { class: 'btn', onclick: async () => {
+          const dest = S.tags.get(sel.value); if (!dest) return;
+          if (!(await confirmSheet('Fusionar etiquetas', `«${t.name}» se reemplazará por «${dest.name}» en todo el historial.`, 'Fusionar', false))) return;
+          const n = await mergeTag(t, dest); toast(`Fusionada en ${n} día${n === 1 ? '' : 's'}`); close(); if (S.day) { await loadDay(S.date); render(); }
+        } }, 'Fusionar')));
+    }
+  });
+}
+async function mergeTag(src, dest) {
+  const tagTrackers = S.trackers.filter(t => t.type === 'meals' || t.type === 'tags').map(t => t.id);
+  const all = (await S.db.all('entries')).filter(e => tagTrackers.includes(e.trackerId));
+  const changed = [];
+  const rep = arr => { if (!Array.isArray(arr) || !arr.includes(src.id)) return arr; const o = arr.map(x => x === src.id ? dest.id : x); return [...new Set(o)]; };
+  for (const e of all) {
+    let touched = false;
+    if (Array.isArray(e.value)) { const n = rep(e.value); if (n !== e.value) { e.value = n; touched = true; } }
+    else if (e.value && typeof e.value === 'object') for (const k in e.value) { const n = rep(e.value[k]); if (n !== e.value[k]) { e.value[k] = n; touched = true; } }
+    if (touched) changed.push(e);
+  }
+  await S.db.putMany('entries', changed);
+  dest.aliases = [...new Set([...(dest.aliases || []), src.name, ...(src.aliases || [])])];
+  dest.categories = [...new Set([...(dest.categories || []), ...(src.categories || [])])];
+  await S.db.put('tags', dest); await S.db.del('tags', src.id); S.tags.delete(src.id);
+  return changed.length;
+}
+
+/* ---------------- ajustes ---------------- */
+function groupBox(...rows) { return h('div', { class: 'group' }, rows); }
+function gRow(k, sub, v, onclick, extra) {
+  return h(onclick ? 'button' : 'div', { class: 'gi', onclick }, h('span', { class: 'k' }, k, sub ? h('small', null, sub) : null), v != null ? h('span', { class: 'v' }, v) : null, extra || (onclick ? h('span', { class: 'mini', html: ICON.right }) : null));
+}
+function toggleEl(on, onchange, label) {
+  const b = h('button', { class: 'sw-t' + (on ? ' on' : ''), role: 'switch', 'aria-checked': String(on), 'aria-label': label });
+  b.onclick = e => { e.stopPropagation(); const n = !b.classList.contains('on'); b.classList.toggle('on', n); b.setAttribute('aria-checked', String(n)); onchange(n); };
+  return b;
+}
+const fmtDT = iso => iso ? new Date(iso).toLocaleString('es-ES', { timeZone: TZ, day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Nunca';
+
+function openSettings() {
+  const f = openFull('Ajustes', body => drawSettings(body));
+  f.el.addEventListener('refresh', () => { f.body.innerHTML = ''; drawSettings(f.body); });
+}
+async function drawSettings(body) {
+  const refresh = () => body.closest('.full')?.dispatchEvent(new Event('refresh'));
+  const persisted = navigator.storage?.persisted ? await navigator.storage.persisted().catch(() => null) : null;
+  const est = navigator.storage?.estimate ? await navigator.storage.estimate().catch(() => null) : null;
+
+  body.append(h('div', { class: 'gh' }, 'Datos y backup'));
+  if (S.demo) body.append(h('div', { class: 'banner b-demo', style: 'margin:0' }, h('span', { class: 't' }, 'Estás en modo demo. El backup exporta los datos demo.')));
+  body.append(groupBox(
+    gRow('Almacenamiento', S.db.kind === 'mem' ? 'No disponible en este navegador' : persisted ? 'Persistente: el sistema no lo borrará por falta de espacio' : 'No persistente: iOS podría borrarlo si falta espacio',
+      persisted ? 'Concedido' : h('button', { class: 'btn', style: 'min-height:36px', onclick: async () => { const r = await requestPersist(); toast(r ? 'Almacenamiento persistente concedido' : 'iOS no lo ha concedido. Instala la app en la pantalla de inicio.'); refresh(); } }, 'Solicitar')),
+    gRow('Último backup', est ? `Uso: ${(est.usage / 1048576).toFixed(1)} MB` : null, fmtDT(S.meta.lastBackup)),
+    gRow('Exportar backup (JSON)', 'Guárdalo en Archivos o iCloud Drive', null, () => exportJSON()),
+    gRow('Exportar CSV', 'Para análisis en Excel o Numbers', null, () => exportCSV()),
+    gRow('Importar backup', 'Vista previa antes de sobrescribir', null, () => importJSON()),
+  ));
+  body.append(h('div', { class: 'warnbox' }, h('b', null, 'Importante en iPhone. '),
+    'Los datos viven dentro de la app instalada. Si eliminas el icono de la pantalla de inicio o borras los datos de Safari, se pierden. Haz backup a menudo y guárdalo en iCloud Drive.'));
+
+  body.append(h('div', { class: 'gh' }, 'Registro'));
+  body.append(groupBox(
+    gRow('Trackers', 'Crear, editar, reordenar, archivar', `${activeTrackers().length} activos`, () => openTrackerManager(refresh)),
+    gRow('Secciones', 'Orden y nombres', null, () => openSectionManager(refresh)),
+    gRow('Etiquetas de alimentos', 'Categorías, alias, fusionar', `${S.tags.size}`, () => openTagManager()),
+    gRow('Categorías de alimentos', null, `${S.meta.categories.length}`, () => openCategoryManager()),
+    gRow('Personas (@)', null, `${S.people.size}`, () => openPeopleManager()),
+  ));
+
+  body.append(h('div', { class: 'gh' }, 'Privacidad'));
+  body.append(groupBox(
+    gRow('PIN de acceso', 'Protege de miradas casuales. No cifra los datos.', S.meta.pinHash ? 'Activado' : 'Desactivado', () => openPinSetup(refresh)),
+    gRow('Ocultar trackers sensibles en resúmenes', 'Sexo, consumo y salud. Se aplicará en Estadísticas.', null, null,
+      toggleEl(!!S.meta.hideSensitive, async v => { S.meta.hideSensitive = v; await saveMeta(); }, 'Ocultar sensibles')),
+  ));
+
+  body.append(h('div', { class: 'gh' }, 'Apariencia'));
+  body.append(groupBox(h('div', { class: 'gi' }, h('span', { class: 'k' }, 'Tema'),
+    h('div', { style: 'width:220px' }, segmented([['system', 'Auto'], ['light', 'Claro'], ['dark', 'Oscuro']], S.meta.theme || 'system', async x => { S.meta.theme = x || 'system'; applyTheme(); await saveMeta(); refresh(); }, 'Tema')))));
+
+  body.append(h('div', { class: 'gh' }, 'Datos demo'));
+  body.append(groupBox(
+    S.demo ? gRow('Salir del modo demo', 'Vuelves a tus datos reales', null, () => switchDemo(false))
+      : gRow('Cargar datos demo', '120 días ficticios en una base de datos aparte', null, () => loadDemo()),
+    gRow('Borrar datos demo', 'No toca tus datos reales', null, async () => {
+      if (!(await confirmSheet('Borrar demo', 'Se elimina la base de datos demo. Tus datos reales no se tocan.', 'Borrar demo'))) return;
+      if (S.demo) await switchDemo(false, true);
+      await deleteDB(DB_DEMO); toast('Datos demo borrados');
+    }),
+  ));
+
+  body.append(h('div', { class: 'gh' }, 'Recordatorio diario'));
+  body.append(h('p', { class: 'note' }, 'En iPhone, las notificaciones de una web instalada solo llegan mediante web push, que requiere un servidor externo. Para no enviar datos a terceros, no se activa. Alternativa: crea un recordatorio diario en la app Recordatorios o en Atajos que abra Bujo.'));
+
+  body.append(h('div', { class: 'gh' }, 'App'));
+  const swv = h('span', null, '…'); getSWVersion().then(v => swv.textContent = v || 'no instalado');
+  body.append(groupBox(
+    gRow('Versión', `Esquema de datos v${SCHEMA_VERSION} · caché offline ${''}`, `v${APP_VERSION}`, null),
+    gRow('Caché offline', null, swv),
+    gRow('Buscar actualización', 'Tus datos no se tocan al actualizar', null, () => checkUpdate()),
+  ));
+  body.append(h('p', { class: 'note', style: 'margin-bottom:24px' }, 'Sin servidores, sin analítica, sin terceros. Todo se guarda en este dispositivo.'));
+}
+async function requestPersist() {
+  try { const r = await navigator.storage?.persist?.(); S.persist = r; return r; } catch (e) { return false; }
+}
+function applyTheme() {
+  const t = S.meta?.theme || 'system';
+  if (t === 'system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+  const dark = t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.querySelectorAll('meta[name=theme-color]').forEach(m => { m.setAttribute('content', dark ? '#121419' : '#F3F4F1'); m.removeAttribute('media'); });
+}
+
+/* Gestión de trackers */
+function openTrackerManager(after) {
+  const f = openFull('Trackers', body => draw(body));
+  function draw(body) {
+    body.innerHTML = '';
+    body.append(h('p', { class: 'note' }, 'Archivar oculta un tracker sin borrar su histórico. Los obligatorios cuentan para el indicador de día completo.'));
+    for (const sec of S.meta.sections) {
+      const list = S.trackers.filter(t => t.section === sec.id).sort((a, b) => a.order - b.order);
+      if (!list.length) continue;
+      body.append(h('div', { class: 'gh' }, sec.name));
+      body.append(groupBox(list.map((t, i) => h('div', { class: 'gi' + (t.archived ? ' arch' : '') },
+        h('button', { class: 'k', style: 'text-align:left;min-height:40px', onclick: () => editTracker(t, () => { draw(body); after?.(); }) }, t.name, h('small', null, TYPE_LABEL[t.type] + (t.archived ? ' · archivado' : '') + (t.required ? '' : ' · opcional'))),
+        h('button', { class: 'mini', 'aria-label': 'Subir', disabled: i === 0, html: ICON.up, onclick: () => swapOrder(list, i, i - 1, () => draw(body)) }),
+        h('button', { class: 'mini', 'aria-label': 'Bajar', disabled: i === list.length - 1, html: ICON.down, onclick: () => swapOrder(list, i, i + 1, () => draw(body)) })))));
+    }
+    body.append(h('button', { class: 'btn pri blk', style: 'margin:16px 0 24px', onclick: () => newTracker(() => { draw(body); after?.(); }) }, 'Añadir tracker'));
+  }
+  f.el.addEventListener('remove', () => after?.());
+}
+async function swapOrder(list, i, j, redraw) {
+  const a = list[i], b = list[j]; [a.order, b.order] = [b.order, a.order];
+  if (a.order === b.order) b.order += (j > i ? -0.5 : 0.5);
+  await S.db.putMany('trackers', [a, b]); flashSaved(); redraw(); render();
+}
+function newTracker(done) {
+  openSheet('Nuevo tracker', (b, close) => {
+    let type = 'bool';
+    const name = h('input', { class: 'inp', placeholder: 'Nombre', id: 'nt-name' });
+    const sec = h('select', { class: 'inp', id: 'nt-sec' }, S.meta.sections.filter(s => s.id !== 'registro').map(s => h('option', { value: s.id }, s.name)));
+    const typeBox = h('div', { class: 'chips' });
+    const drawT = () => { typeBox.innerHTML = ''; CREATABLE.forEach(k => typeBox.append(h('button', { class: 'chip sm' + (type === k ? ' on' : ''), onclick: () => { type = k; drawT(); } }, TYPE_LABEL[k]))); };
+    drawT();
+    b.append(h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Nombre'), name),
+      h('div', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Tipo'), typeBox),
+      h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Sección'), sec),
+      h('button', { class: 'btn pri blk', onclick: async () => {
+        if (!name.value.trim()) { name.focus(); return; }
+        const cfg = { scale: { min: 0, max: 5 }, multi: { options: [] }, checklist: { options: [] }, counter: { unit: '' }, number: { unit: '' }, list: { kind: 'generic' } }[type] || {};
+        const t = { id: 't_' + uid().slice(0, 8), name: name.value.trim(), type, section: sec.value, config: cfg, order: Math.max(0, ...S.trackers.map(x => x.order)) + 1,
+          required: false, sensitive: false, archived: false, created: nowISO() };
+        await S.db.put('trackers', t); S.trackers.push(t); flashSaved(); close(); done(); render();
+        if (type === 'multi' || type === 'checklist') editTracker(t, done);
+      } }, 'Crear'));
+  });
+}
+function editTracker(t, done) {
+  openSheet(t.name, (b, close) => {
+    const c = clone(t.config);
+    const name = h('input', { class: 'inp', value: t.name, id: 'et-name' });
+    const sec = h('select', { class: 'inp', id: 'et-sec' }, S.meta.sections.filter(s => s.id !== 'registro').map(s => h('option', { value: s.id, selected: s.id === t.section }, s.name)));
+    let req = t.required, sens = t.sensitive;
+    b.append(h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Nombre'), name),
+      h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Sección'), sec),
+      groupBox(gRow('Cuenta para día completo', null, null, null, toggleEl(req, v => req = v, 'Obligatorio')),
+        gRow('Sensible', 'Se puede ocultar en resúmenes', null, null, toggleEl(sens, v => sens = v, 'Sensible'))));
+    const numIn = (label, key, ph) => h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, label),
+      h('input', { class: 'inp', inputmode: 'numeric', value: c[key] ?? '', placeholder: ph || '', onchange: e => { const n = parseInt(e.target.value, 10); c[key] = isNaN(n) ? undefined : n; } }));
+    const txtIn = (label, key) => h('label', { class: 'tfield' }, h('span', { class: 'lbl' }, label), h('input', { class: 'inp', value: c[key] ?? '', onchange: e => c[key] = e.target.value.trim() }));
+    if (t.type === 'scale' || t.type === 'sleep') {
+      if (t.type === 'scale') b.append(h('div', { class: 'row', style: 'flex-wrap:nowrap' }, numIn('Mínimo', 'min'), numIn('Máximo', 'max')));
+      const cs = h('div');
+      const drawCs = () => { cs.innerHTML = ''; cs.append(segmented([[undefined, 'Sin color'], ['good-high', 'Alto = bien'], ['bad-high', 'Alto = mal']], c.colors, x => { c.colors = x || undefined; drawCs(); }, 'Color')); };
+      drawCs(); b.append(h('div', { class: 'tfield' }, h('span', { class: 'lbl' }, 'Código de color'), cs));
+      b.append(h('p', { class: 'note' }, 'Cambiar el rango no modifica los valores ya guardados.'));
+    }
+    if (t.type === 'counter' || t.type === 'number') b.append(txtIn('Unidad', 'unit'));
+    if (t.type === 'counter') b.append(numIn('Objetivo diario (vacío = sin objetivo)', 'goal'));
+    if (t.type === 'bool' && !t.config.details) {
+      b.append(groupBox(gRow('Pedir hora opcional', null, null, null, toggleEl(!!c.time, v => c.time = v, 'Hora'))));
+    }
+    if (t.type === 'multi' || t.type === 'checklist' || t.type === 'meals') {
+      const key = t.type === 'meals' ? 'meals' : 'options';
+      const box = h('div', { class: 'group' });
+      const drawO = () => {
+        box.innerHTML = '';
+        c[key].forEach(o => box.append(h('div', { class: 'gi' + (o.archived ? ' arch' : '') },
+          h('input', { class: 'inp', value: o.label, style: 'flex:1', onchange: e => o.label = e.target.value.trim() || o.label }),
+          h('button', { class: 'btn', style: 'min-height:36px;padding:0 10px', onclick: () => { o.archived = !o.archived; drawO(); } }, o.archived ? 'Recuperar' : 'Archivar'))));
+        const ni = h('input', { class: 'inp', placeholder: 'Nueva opción', style: 'flex:1' });
+        box.append(h('div', { class: 'gi' }, ni, h('button', { class: 'btn pri', style: 'min-height:36px', onclick: () => { const l = ni.value.trim(); if (!l) return; let id = norm(l).replace(/[^a-z0-9]+/g, '_') || uid().slice(0, 6); if (c[key].some(o => o.id === id)) id += '_' + uid().slice(0, 4); c[key].push({ id, label: l }); drawO(); } }, 'Añadir')));
+      };
+      drawO();
+      b.append(h('div', { class: 'tfield' }, h('span', { class: 'lbl' }, t.type === 'meals' ? 'Comidas' : 'Opciones (archivar conserva el histórico)'), box));
+      if (t.type === 'checklist') b.append(groupBox(gRow('Botón «Todos tomados»', null, null, null, toggleEl(!!c.allButton, v => c.allButton = v, 'Todos'))));
+    }
+    b.append(h('button', { class: 'btn pri blk', onclick: async () => {
+      if (t.type === 'scale' && !(c.max > c.min)) { toast('El máximo debe ser mayor que el mínimo'); return; }
+      Object.assign(t, { name: name.value.trim() || t.name, section: sec.value, required: req, sensitive: sens, config: c });
+      await S.db.put('trackers', t); flashSaved(); close(); done?.(); render();
+    } }, 'Guardar'));
+    b.append(h('button', { class: 'btn blk ' + (t.archived ? '' : 'dan'), onclick: async () => {
+      t.archived = !t.archived; await S.db.put('trackers', t); toast(t.archived ? 'Archivado. El histórico se conserva.' : 'Recuperado'); close(); done?.(); render();
+    } }, t.archived ? 'Recuperar tracker' : 'Archivar tracker'));
+  });
+}
+function openSectionManager(after) {
+  openFull('Secciones', body => {
+    const draw = () => {
+      body.innerHTML = '';
+      const secs = S.meta.sections;
+      body.append(groupBox(secs.map((s, i) => h('div', { class: 'gi' },
+        h('input', { class: 'inp', value: s.name, style: 'flex:1', onchange: async e => { s.name = e.target.value.trim() || s.name; await saveMeta(); flashSaved(); render(); } }),
+        h('button', { class: 'mini', 'aria-label': 'Subir', disabled: i === 0, html: ICON.up, onclick: async () => { [secs[i - 1], secs[i]] = [secs[i], secs[i - 1]]; await saveMeta(); draw(); render(); } }),
+        h('button', { class: 'mini', 'aria-label': 'Bajar', disabled: i === secs.length - 1, html: ICON.down, onclick: async () => { [secs[i + 1], secs[i]] = [secs[i], secs[i + 1]]; await saveMeta(); draw(); render(); } })))));
+      const ni = h('input', { class: 'inp', placeholder: 'Nueva sección', style: 'flex:1' });
+      body.append(h('div', { class: 'row', style: 'flex-wrap:nowrap;margin-top:8px' }, ni, h('button', { class: 'btn pri', onclick: async () => { if (!ni.value.trim()) return; secs.push({ id: 's_' + uid().slice(0, 6), name: ni.value.trim() }); await saveMeta(); draw(); } }, 'Añadir')));
+      body.append(h('p', { class: 'note' }, 'Las secciones sin trackers no aparecen en Hoy. Mueve trackers entre secciones desde Trackers.'));
+    };
+    draw();
+  });
+}
+function openTagManager() {
+  openFull('Etiquetas de alimentos', body => {
+    const q = h('input', { class: 'inp', placeholder: 'Buscar etiqueta', id: 'tag-search', type: 'search' });
+    const list = h('div');
+    const draw = () => {
+      list.innerHTML = '';
+      const n = norm(q.value);
+      const tags = [...S.tags.values()].filter(t => !n || t.norm.includes(n)).sort((a, b) => a.name.localeCompare(b.name));
+      if (!tags.length) { list.append(h('p', { class: 'note' }, S.tags.size ? 'Sin resultados.' : 'Aún no hay etiquetas. Se crean al registrar comidas.')); return; }
+      list.append(groupBox(tags.map(t => gRow(t.name, (t.categories || []).map(c => S.meta.categories.find(x => x.id === c)?.name).filter(Boolean).join(', ') || null,
+        (t.aliases || []).length ? `${t.aliases.length} alias` : null, () => openTagEditor(t, draw)))));
+    };
+    q.addEventListener('input', draw); body.append(q, list); draw();
+  });
+}
+function openCategoryManager() {
+  openFull('Categorías de alimentos', body => {
+    const draw = () => {
+      body.innerHTML = '';
+      body.append(groupBox(S.meta.categories.map(c => h('div', { class: 'gi' },
+        h('input', { class: 'inp', value: c.name, style: 'flex:1', onchange: async e => { c.name = e.target.value.trim() || c.name; await saveMeta(); flashSaved(); } })))));
+      const ni = h('input', { class: 'inp', placeholder: 'Nueva categoría', style: 'flex:1' });
+      body.append(h('div', { class: 'row', style: 'flex-wrap:nowrap;margin-top:8px' }, ni, h('button', { class: 'btn pri', onclick: async () => { if (!ni.value.trim()) return; S.meta.categories.push({ id: 'c_' + uid().slice(0, 6), name: ni.value.trim() }); await saveMeta(); draw(); } }, 'Añadir')));
+      body.append(h('p', { class: 'note' }, 'Asigna categorías a cada alimento desde Etiquetas, o tocando la etiqueta en Comidas.'));
+    };
+    draw();
+  });
+}
+function openPeopleManager() {
+  openFull('Personas', body => {
+    const draw = () => {
+      body.innerHTML = '';
+      const ps = [...S.people.values()].sort((a, b) => a.name.localeCompare(b.name));
+      body.append(h('p', { class: 'note' }, 'Se crean al escribir @nombre en una nota. Para nombres con espacio usa guion bajo: @los_del_curro.'));
+      if (!ps.length) return;
+      body.append(groupBox(ps.map(p => h('div', { class: 'gi' },
+        h('input', { class: 'inp', value: p.name, style: 'flex:1', onchange: async e => { p.name = e.target.value.trim() || p.name; p.norm = norm(p.name); await S.db.put('people', p); flashSaved(); } })))));
+      body.append(h('p', { class: 'note' }, 'Renombrar aquí no cambia el texto ya escrito en las notas; la búsqueda (fase 1b) usará ambos.'));
+    };
+    draw();
+  });
+}
+
+/* PIN */
+async function sha(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function pinPad(title, onDone, sub) {
+  const el = h('div', { class: 'lock', role: 'dialog', 'aria-label': title });
+  let pin = '';
+  const dots = h('div', { class: 'pins', 'aria-hidden': 'true' });
+  const draw = () => { dots.innerHTML = ''; for (let i = 0; i < 4; i++) dots.append(h('i', { class: i < pin.length ? 'f' : '' })); };
+  const press = async d => {
+    if (d === 'del') pin = pin.slice(0, -1); else if (pin.length < 4) pin += d;
+    draw();
+    if (pin.length === 4) { const ok = await onDone(pin, el); if (ok === false) { dots.classList.add('err'); setTimeout(() => { dots.classList.remove('err'); pin = ''; draw(); }, 400); } }
+  };
+  const keys = ['1','2','3','4','5','6','7','8','9','', '0', 'del'];
+  el.append(h('h1', null, title), sub ? h('p', { class: 'note', style: 'text-align:center;max-width:300px' }, sub) : '', dots,
+    h('div', { class: 'pad' }, keys.map(k => k === '' ? h('span') : h('button', { 'aria-label': k === 'del' ? 'Borrar' : k, onclick: () => press(k) }, k === 'del' ? '⌫' : k))));
+  draw();
+  document.body.append(el);
+  const kb = e => { if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace') press('del'); };
+  document.addEventListener('keydown', kb);
+  el._cleanup = () => document.removeEventListener('keydown', kb);
+  return el;
+}
+function showLock() {
+  return new Promise(res => {
+    if (!S.meta.pinHash || $('.lock')) return res();
+    const el = pinPad('Bujo', async pin => {
+      if (await sha(S.meta.pinSalt + pin) === S.meta.pinHash) { el._cleanup(); el.remove(); S.unlocked = true; res(); return true; }
+      return false;
+    });
+  });
+}
+function openPinSetup(after) {
+  if (S.meta.pinHash) {
+    openSheet('PIN', (b, close) => {
+      b.append(h('button', { class: 'btn blk', onclick: () => { close(); setNewPin(after); } }, 'Cambiar PIN'),
+        h('button', { class: 'btn dan blk', onclick: async () => { S.meta.pinHash = null; S.meta.pinSalt = null; await saveMeta(); close(); toast('PIN desactivado'); after(); } }, 'Desactivar PIN'));
+    });
+  } else setNewPin(after);
+}
+function setNewPin(after) {
+  if (!crypto.subtle) { toast('El PIN requiere HTTPS'); return; }
+  let first = null;
+  const el = pinPad('Nuevo PIN', async (pin, el) => {
+    if (!first) { first = pin; el.querySelector('h1').textContent = 'Repite el PIN'; return false; }
+    if (pin !== first) { first = null; el.querySelector('h1').textContent = 'No coincide. Nuevo PIN'; return false; }
+    S.meta.pinSalt = uid(); S.meta.pinHash = await sha(S.meta.pinSalt + pin); await saveMeta();
+    el._cleanup(); el.remove(); toast('PIN activado'); after(); return true;
+  }, 'Si lo olvidas, solo podrás entrar borrando los datos de la app. Ten un backup.');
+  el.append(h('button', { class: 'btn', onclick: () => { el._cleanup(); el.remove(); } }, 'Cancelar'));
+}
+
+/* ---------------- backup ---------------- */
+async function buildBackup() {
+  const data = await dumpAll();
+  data.meta = data.meta.map(m => m.key === 'app' ? { ...m, pinHash: null, pinSalt: null } : m);
+  return { app: 'bujo', format: 1, schemaVersion: SCHEMA_VERSION, appVersion: APP_VERSION, exportedAt: nowISO(), demo: S.demo, data };
+}
+async function shareOrDownload(blob, filename, title) {
+  const file = new File([blob], filename, { type: blob.type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title }); return true; }
+    catch (e) { if (e.name === 'AbortError') return false; console.warn(e); }
+  }
+  const a = h('a', { href: URL.createObjectURL(blob), download: filename }); document.body.append(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  return true;
+}
+async function exportJSON() {
+  const b = await buildBackup();
+  const stamp = todayStr();
+  const ok = await shareOrDownload(new Blob([JSON.stringify(b)], { type: 'application/json' }), `bujo-${S.demo ? 'demo-' : ''}backup-${stamp}.json`, 'Backup Bujo');
+  if (ok) { S.meta.lastBackup = nowISO(); await saveMeta(); toast('Backup exportado'); const bn = $('#banners'); if (bn && !S.demo) { bn.remove(); renderBanners($('#main')).then(() => $('#main').prepend($('#banners'))); } }
+}
+function csvCell(v) { if (v == null) return ''; const s = String(v); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+async function exportCSV() {
+  const d = await dumpAll();
+  const tr = new Map(d.trackers.map(t => [t.id, t])); const tg = new Map(d.tags.map(t => [t.id, t.name]));
+  const rows = [['fecha', 'origen', 'tracker_id', 'tracker', 'campo', 'valor', 'hora']];
+  const push = (date, src, t, field, value, time) => rows.push([date, src, t?.id || '', t?.name || '', field, value, time || '']);
+  for (const e of d.entries.sort((a, b) => a.date.localeCompare(b.date))) {
+    const t = tr.get(e.trackerId), v = e.value;
+    if (!t) { push(e.date, 'entry', { id: e.trackerId }, 'valor', JSON.stringify(v)); continue; }
+    if (t.type === 'sleep') { push(e.date, 'entry', t, 'acostarse', v.bed); push(e.date, 'entry', t, 'levantarse', v.wake); const m = v.hoursOverride != null ? v.hoursOverride * 60 : sleepMinutes(v); push(e.date, 'entry', t, 'horas', m == null ? '' : (m / 60).toFixed(2)); push(e.date, 'entry', t, 'horas_corregidas', v.hoursOverride != null ? 'si' : 'no'); push(e.date, 'entry', t, 'calidad', v.quality); }
+    else if (t.type === 'meals') for (const k in v) { if (v[k] === 'skip') push(e.date, 'entry', t, k, '(no comí)'); else (v[k] || []).forEach(id => push(e.date, 'entry', t, k, tg.get(id) || id)); }
+    else if (t.type === 'tags') (v || []).forEach(id => push(e.date, 'entry', t, 'etiqueta', tg.get(id) || id));
+    else if (t.type === 'multi') (v || []).forEach(o => push(e.date, 'entry', t, 'opcion', t.config.options.find(x => x.id === o)?.label || o));
+    else if (t.type === 'checklist') for (const k in v) push(e.date, 'entry', t, t.config.options.find(x => x.id === k)?.label || k, v[k] ? 1 : 0);
+    else if (t.type === 'bool') { push(e.date, 'entry', t, 'valor', v.v ? 1 : 0, v.time); for (const k in v) if (!['v', 'time'].includes(k) && v[k] != null) push(e.date, 'entry', t, k, v[k]); }
+    else if (t.type === 'cycle') for (const k in v) push(e.date, 'entry', t, k, typeof v[k] === 'boolean' ? (v[k] ? 1 : 0) : v[k]);
+    else if (t.type === 'list') push(e.date, 'entry', t, 'ninguna', 1);
+    else push(e.date, 'entry', t, 'valor', v);
+  }
+  for (const e of d.events.sort((a, b) => a.date.localeCompare(b.date))) {
+    const t = tr.get(e.trackerId);
+    for (const k in e.attrs || {}) push(e.date, 'event', t, k, e.attrs[k], e.time);
+  }
+  for (const i of d.items) rows.push([i.date || '', 'item', '', i.collection || '', i.type, `[${i.status}] ${i.text}`, i.time || '']);
+  const csv = '﻿' + rows.map(r => r.map(csvCell).join(';')).join('\n');
+  await shareOrDownload(new Blob([csv], { type: 'text/csv' }), `bujo-${S.demo ? 'demo-' : ''}datos-${todayStr()}.csv`, 'Datos Bujo (CSV)');
+}
+function validateBackup(b) {
+  const errs = [];
+  if (!b || typeof b !== 'object') return ['El archivo no es JSON válido.'];
+  if (b.app !== 'bujo') errs.push('No es un backup de Bujo.');
+  if (typeof b.schemaVersion !== 'number') errs.push('Falta la versión de esquema.');
+  else if (b.schemaVersion > SCHEMA_VERSION) errs.push(`El backup es de una versión más nueva (esquema v${b.schemaVersion}). Actualiza la app primero.`);
+  const d = b.data || {};
+  for (const s of STORES) if (!Array.isArray(d[s])) errs.push(`Falta la colección «${s}».`);
+  if (errs.length) return errs;
+  const re = /^\d{4}-\d{2}-\d{2}$/;
+  if (d.entries.some(e => !re.test(e.date) || !e.trackerId)) errs.push('Hay registros con fecha o tracker no válidos.');
+  if (d.events.some(e => !e.id || !re.test(e.date))) errs.push('Hay entradas de lista no válidas.');
+  if (!d.meta.find(m => m.key === 'app')) errs.push('Faltan los ajustes de la app.');
+  if (!d.trackers.length) errs.push('El backup no contiene trackers.');
+  return errs;
+}
+function importJSON() {
+  const inp = h('input', { type: 'file', accept: '.json,application/json,text/plain', style: 'position:fixed;left:-9999px' });
+  document.body.append(inp);
+  inp.onchange = async () => {
+    const f = inp.files[0]; inp.remove(); if (!f) return;
+    let b; try { b = JSON.parse(await f.text()); } catch (e) { b = null; }
+    const errs = validateBackup(b);
+    openSheet('Importar backup', (body, close) => {
+      if (errs.length) { body.append(h('div', { class: 'warnbox' }, h('b', null, 'No se puede importar. '), errs.join(' ')), h('button', { class: 'btn blk', onclick: close }, 'Cerrar')); return; }
+      const d = b.data; const dates = d.entries.map(e => e.date).sort();
+      body.append(h('dl', { class: 'kv' },
+        h('dt', null, 'Archivo'), h('dd', null, f.name),
+        h('dt', null, 'Exportado'), h('dd', null, fmtDT(b.exportedAt)),
+        h('dt', null, 'Versión'), h('dd', null, `app ${b.appVersion || '?'} · esquema v${b.schemaVersion}`),
+        h('dt', null, 'Rango'), h('dd', null, dates.length ? `${fmtShort(dates[0])} – ${fmtShort(dates[dates.length - 1])}` : 'sin registros'),
+        h('dt', null, 'Días con datos'), h('dd', null, new Set(dates).size),
+        h('dt', null, 'Registros'), h('dd', null, `${d.entries.length} valores · ${d.events.length} entradas de lista`),
+        h('dt', null, 'Diario'), h('dd', null, `${d.items.length} tareas, eventos y notas`),
+        h('dt', null, 'Etiquetas'), h('dd', null, `${d.tags.length} alimentos · ${d.people.length} personas`),
+        h('dt', null, 'Trackers'), h('dd', null, d.trackers.length)),
+        b.demo ? h('div', { class: 'warnbox' }, 'Este backup contiene datos demo.') : '',
+        h('div', { class: 'warnbox' }, h('b', null, 'Se sobrescribirá todo '), `lo que hay ahora en ${S.demo ? 'la demo' : 'tus datos reales'}. El PIN no se importa.`),
+        h('button', { class: 'btn blk', onclick: () => exportJSON() }, 'Exportar copia de lo actual antes'),
+        h('button', { class: 'btn dan fill blk', onclick: async () => {
+          try {
+            let data = clone(d);
+            if (b.schemaVersion < SCHEMA_VERSION) data = migrateData(data, b.schemaVersion);
+            const keepPin = { pinHash: S.meta.pinHash, pinSalt: S.meta.pinSalt };
+            data.meta = data.meta.map(m => m.key === 'app' ? { ...m, ...keepPin, schemaVersion: SCHEMA_VERSION } : m);
+            await S.db.replaceAll(data);
+            await openDB(S.demo); applyTheme(); await loadDay(S.date); close(); $('.full')?.remove(); render(); toast('Backup importado');
+          } catch (e) { console.error(e); toast('Error al importar. No se ha modificado nada.'); }
+        } }, 'Sobrescribir e importar'));
+    });
+  };
+  inp.click();
+}
+
+/* ---------------- demo ---------------- */
+function deleteDB(name) { return new Promise(res => { const r = indexedDB.deleteDatabase(name); r.onsuccess = r.onerror = r.onblocked = () => res(); }); }
+async function switchDemo(on, silent) {
+  try { localStorage.setItem('bujo.demo', on ? '1' : '0'); } catch (e) {}
+  await openDB(on); applyTheme(); S.date = todayStr(); await loadDay(S.date);
+  $('#layer').innerHTML = ''; render(); if (!silent) toast(on ? 'Modo demo' : 'Tus datos reales');
+}
+async function loadDemo() {
+  await switchDemo(true, true);
+  const existing = await S.db.all('entries');
+  if (!existing.length) await seedDemo();
+  await loadDay(S.date); render(); toast('Datos demo cargados');
+}
+async function seedDemo() {
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pick = a => a[Math.floor(rnd() * a.length)];
+  const R = (a, b) => a + Math.floor(rnd() * (b - a + 1));
+  const foods = { desayuno: ['Café', 'Tostada', 'Aceite', 'Tomate', 'Jamón', 'Porridge avena', 'Leche', 'Plátano', 'Yogur', 'Fruta'],
+    comida: ['Arroz', 'Pollo', 'Lentejas', 'Garbanzos', 'Ensalada', 'Pasta', 'Ñoquis', 'Salmón', 'Calabacín', 'Huevos revueltos', 'Pan', 'Aguacate', 'Sushi'],
+    cena: ['Pizza', 'Crema de calabaza', 'Gyozas', 'Tortilla', 'Queso', 'Ensalada', 'Hamburguesa', 'Aros de cebolla', 'Sopa', 'Pescado'],
+    extras: ['Infusión', 'Higos', 'Sandía', 'Smoothie', 'Chocolate', 'Patatas fritas', 'Café', 'Picos'] };
+  const catMap = { 'Leche': ['lacteos'], 'Yogur': ['lacteos'], 'Queso': ['lacteos'], 'Pizza': ['gluten', 'lacteos', 'ultra'], 'Pan': ['gluten'], 'Tostada': ['gluten'],
+    'Pasta': ['gluten'], 'Ñoquis': ['gluten'], 'Lentejas': ['legumbres'], 'Garbanzos': ['legumbres'], 'Hamburguesa': ['ultra'], 'Aros de cebolla': ['fritos', 'ultra'],
+    'Patatas fritas': ['fritos', 'ultra'], 'Picos': ['gluten', 'ultra'], 'Gyozas': ['gluten'] };
+  const tagIds = {};
+  for (const m in foods) for (const f of foods[m]) if (!tagIds[f]) { const t = await ensureTag(f); t.categories = catMap[f] || []; await S.db.put('tags', t); tagIds[f] = t.id; }
+  const today = todayStr(); const entries = [], events = [], items = [];
+  let cycleStart = addDays(today, -R(3, 20)); const cyc = [];
+  for (let s = cycleStart; s > addDays(today, -125); s = addDays(s, -R(26, 31))) cyc.push(s);
+  const isPeriod = d => cyc.some(s => { const k = diffDays(d, s); return k >= 0 && k < 5; });
+  let prevBloat = 0; let prevLegume = false;
+  for (let i = 119; i >= 0; i--) {
+    const d = addDays(today, -i); const E = (trackerId, value) => entries.push({ date: d, trackerId, value, updated: nowISO() });
+    if (i > 0 && i < 3 && rnd() < .5) continue; // algunos días recientes vacíos
+    const partial = i === 0; // hoy a medias, para ver el indicador
+    const sleepM = R(330, 520), wakeM = R(7 * 60, 10 * 60 + 30), bedM = wakeM - sleepM;
+    const hm = m => `${String(Math.floor(((m % 1440) + 1440) % 1440 / 60)).padStart(2, '0')}:${String(((m % 60) + 60) % 60).padStart(2, '0')}`;
+    const q = Math.max(0, Math.min(5, Math.round((sleepM - 330) / 45) + R(-1, 1)));
+    E('sleep', { bed: hm(bedM), wake: hm(wakeM), quality: q });
+    const stress = Math.max(0, Math.min(5, R(1, 4) + (q < 2 ? 1 : 0)));
+    E('stress', stress); E('mood', Math.max(1, Math.min(5, 3 + Math.round((q - 2.5) / 2) - (stress > 3 ? 1 : 0) + R(-1, 1))));
+    const meal = {};
+    for (const m of ['desayuno', 'comida', 'cena', 'extras']) {
+      if (m === 'desayuno' && rnd() < .15) { meal[m] = 'skip'; continue; }
+      const n = m === 'extras' ? R(0, 2) : R(1, 3); const s = new Set(); while (s.size < n) s.add(tagIds[pick(foods[m])]);
+      if (s.size) meal[m] = [...s];
+    }
+    E('meals', meal);
+    const legume = Object.values(meal).flat().some(id => [tagIds['Lentejas'], tagIds['Garbanzos'], tagIds['Pizza']].includes(id));
+    const per = isPeriod(d);
+    let bloat = (prevLegume && rnd() < .7) || (per && rnd() < .5) || rnd() < .12;
+    const st = bloat ? (rnd() < .5 ? ['hinchado', 'gases'] : ['hinchado']) : rnd() < .7 ? ['bien'] : ['regular'];
+    E('stomach', st); E('stomach_int', bloat ? R(2, 4) : st[0] === 'bien' ? 0 : 1);
+    prevLegume = legume; prevBloat = bloat;
+    const nb = R(0, 2);
+    if (!nb) E('bowel', { none: true });
+    for (let k = 0; k < nb; k++) events.push({ id: uid(), date: d, trackerId: 'bowel', time: rnd() < .5 ? hm(R(420, 1320)) : null, attrs: { bristol: bloat ? pick([2, 3, 5, 6]) : pick([3, 4, 4, 4, 5]) }, created: nowISO() });
+    E('pill', { v: rnd() < .93, time: rnd() < .6 ? '09:' + String(R(0, 59)).padStart(2, '0') : null });
+    E('cycle', per ? { period: true, flow: pick(['leve', 'medio', 'abundante']), pain: R(1, 4) } : { period: false, ...(rnd() < .2 ? { pain: R(0, 2) } : {}) });
+    if (partial) continue;
+    E('cigs', R(0, 8)); E('joints', rnd() < .4 ? R(1, 2) : 0); if (rnd() < .8) E('caffeine', R(1, 3)); if (rnd() < .2) E('alcohol', R(1, 3));
+    E('skincare', { am: rnd() < .4, pm: rnd() < .6 });
+    const ex = rnd() < .35; E('exercise', ex ? { v: true, tipo: pick(['Gym', 'Caminar', 'Pilates']), min: pick([30, 45, 60]) } : { v: false });
+    E('breathing', { v: rnd() < .3 });
+    E('water', R(3, 9));
+    const sp = {}; ['b12', 'mg', 'lteanina', 'vitd', 'omega3', 'creatina'].forEach(k => sp[k] = rnd() < .75); E('supps', sp);
+    if (rnd() < .15) E('sex', [pick(['sola', 'pareja'])]); else if (rnd() < .5) E('sex', ['no']);
+  }
+  const people = ['Ana', 'Leo', 'Nuria', 'Grupo_teatro'];
+  const notes = ['Me he despertado muy cansada, sin energía', 'Comida con @Ana', 'Día tranquilo, he leído un rato', 'Paseo largo con @Leo', 'Me he encontrado bien todo el día', 'Cena en casa de @Nuria', 'Ensayo con @Grupo_teatro'];
+  const tasks = ['Comprar fruta', 'Hacer comida para la semana', 'Recoger cuarto', 'Limpiar baño', 'Poner lavadora', 'Llamar al seguro', 'Pedir cita dentista'];
+  for (let i = 20; i >= 0; i--) {
+    const d = addDays(today, -i);
+    const mk = (type, text, status = 'open', extra = {}) => items.push({ id: uid(), type, text, dateType: 'day', date: d, status, collection: null, time: null, people: [], trail: [], fields: {}, created: nowISO(), updated: nowISO(), order: items.length, ...extra });
+    if (rnd() < .6) mk('note', pick(notes));
+    for (let k = 0; k < R(0, 3); k++) mk('task', pick(tasks), i > 0 ? (rnd() < .8 ? 'done' : 'open') : 'open');
+    if (dow(d) === 1 || dow(d) === 3) mk('event', 'Gym', 'open', { time: '19:00' });
+    if (dow(d) === 2) mk('event', 'Ofi');
+  }
+  for (const it of items) it.people = await extractPeople(it.text);
+  await S.db.putMany('entries', entries); await S.db.putMany('events', events); await S.db.putMany('items', items);
+  people.forEach(() => {});
+  await loadCycle();
+}
+
+/* ---------------- service worker y actualizaciones ---------------- */
+let swReg = null;
+async function registerSW() {
+  if (!('serviceWorker' in navigator) || location.protocol === 'file:') return;
+  try {
+    swReg = await navigator.serviceWorker.register('sw.js');
+    swReg.addEventListener('updatefound', () => {
+      const nw = swReg.installing; nw?.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdateBanner();
+      });
+    });
+    if (swReg.waiting && navigator.serviceWorker.controller) showUpdateBanner();
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (!reloading) { reloading = true; location.reload(); } });
+  } catch (e) { console.warn('SW', e); }
+}
+function showUpdateBanner() {
+  const b = $('#banners'); if (!b || $('#updbanner')) return;
+  b.prepend(h('div', { class: 'banner b-info', id: 'updbanner' }, h('span', { class: 't' }, 'Hay una versión nueva. Tus datos se mantienen.'),
+    h('button', { onclick: applyUpdate }, 'Actualizar')));
+}
+function applyUpdate() {
+  if (swReg?.waiting) swReg.waiting.postMessage({ type: 'SKIP_WAITING' }); else location.reload();
+}
+function getSWVersion() {
+  return new Promise(res => {
+    const c = navigator.serviceWorker?.controller; if (!c) return res(null);
+    const ch = new MessageChannel(); ch.port1.onmessage = e => res(e.data?.version || null);
+    c.postMessage({ type: 'GET_VERSION' }, [ch.port2]); setTimeout(() => res(null), 1500);
+  });
+}
+async function checkUpdate() {
+  if (!swReg) { toast('Sin service worker. Recargando…'); setTimeout(() => location.reload(), 600); return; }
+  toast('Buscando actualización…');
+  try { await swReg.update(); } catch (e) { toast('Sin conexión. Inténtalo más tarde.'); return; }
+  if (swReg.waiting || swReg.installing) { toast('Actualización encontrada'); setTimeout(applyUpdate, 800); }
+  else {
+    // El HTML se sirve "red primero": recargar trae la última versión del index aunque el SW no cambie.
+    try { const r = await fetch('./index.html', { cache: 'no-store' }); const t = await r.text(); const m = t.match(/APP_VERSION = '([^']+)'/);
+      if (m && m[1] !== APP_VERSION) { toast(`Nueva versión ${m[1]}. Recargando…`); setTimeout(() => location.reload(), 900); }
+      else toast(`Ya tienes la última versión (v${APP_VERSION})`);
+    } catch (e) { toast('Sin conexión. Inténtalo más tarde.'); }
+  }
+}
+
+/* ---------------- arranque ---------------- */
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', async () => {
+  if (document.hidden) { hiddenAt = Date.now(); return; }
+  if (S.meta?.pinHash && Date.now() - hiddenAt > 60000) await showLock();
+  // Si cambia el día con la app abierta, ir a hoy
+  if (hiddenAt && Date.now() - hiddenAt > 30 * 60000 && S.date !== todayStr()) goDate(todayStr());
+});
+async function boot() {
+  let demo = false; try { demo = localStorage.getItem('bujo.demo') === '1'; } catch (e) {}
+  try {
+    await openDB(demo);
+  } catch (e) {
+    $('#app').append(h('div', { class: 'fatal' }, h('b', null, 'No se han podido abrir los datos. '), String(e?.message || e), h('br'), 'No borres la app: recarga o contacta para recuperar.'));
+    return;
+  }
+  applyTheme();
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applyTheme);
+  await showLock();
+  await loadDay(S.date);
+  render();
+  if (S.db.kind === 'idb' && navigator.storage?.persisted && !(await navigator.storage.persisted())) requestPersist();
+  registerSW();
+}
+boot();
+</script>
+</body>
+</html>
