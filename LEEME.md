@@ -1,4 +1,9 @@
-# Bujo · v0.2.0
+# Bujo · v0.2.1
+
+## v0.2.1
+- «Porros» pasa a llamarse «CBD» (el histórico se conserva).
+- Colecciones: el contador muestra el total de elementos y cuántos están hechos.
+
 
 Archivos (todos en la **raíz** del repositorio `BULLET_JOURNAL`):
 `index.html` · `sw.js` · `manifest.webmanifest` · `icon-192.png` · `icon-512.png` · `apple-touch-icon.png` · `LEEME.md`

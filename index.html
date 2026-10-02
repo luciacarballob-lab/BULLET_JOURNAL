@@ -190,7 +190,8 @@ a{color:var(--accent)}
 .fb b{font:600 11px 'DM Mono';flex:none}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .col{background:var(--card);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);text-align:left;min-height:110px}
-.col>i{font-size:24px}.col b{font-size:14px;line-height:1.2}
+.col>i{font-size:24px}.col>b{font-size:14px;line-height:1.2}
+.cc{display:flex;align-items:baseline;gap:6px;margin-top:auto}.cc b{font:500 22px 'DM Mono'}.cc span{font-size:11.5px;color:var(--muted)}
 .prog{display:flex;align-items:center;gap:8px;font:400 11px 'DM Mono';color:var(--muted)}
 .bar{flex:1;height:4px;border-radius:2px;background:var(--line2);overflow:hidden}.bar>div{height:100%;background:var(--ink)}
 .bar.g>div{background:var(--g)}
@@ -239,8 +240,8 @@ dl.pv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-siz
 <div class="toast" id="toast" role="status"></div>
 <script>
 'use strict';
-/* Bujo · v0.2.0 — esquema de datos v2 (migración desde v1 incluida, sin pérdida). */
-const APP_VERSION = '0.2.0';
+/* Bujo · v0.2.1 — esquema de datos v2 (migración desde v1 incluida, sin pérdida). */
+const APP_VERSION = '0.2.1';
 const SCHEMA_VERSION = 2;
 const IDB_VERSION = 1;
 const DB_REAL = 'bujo', DB_DEMO = 'bujo_demo';
@@ -368,7 +369,7 @@ function trackersV2() {
     T('bowel', 'Deposiciones', 'list', 'digestivo', { kind: 'bristol' }),
     T('pill', 'Pastilla endometriosis', 'bool', 'salud', { time: true }, { sensitive: true }),
     T('cigs', 'Cigarros', 'counter', 'consumo', { unit: '' }, { required: false, sensitive: true }),
-    T('joints', 'Porros', 'counter', 'consumo', { unit: '' }, { required: false, sensitive: true }),
+    T('joints', 'CBD', 'counter', 'consumo', { unit: '' }, { required: false, sensitive: true }),
     T('caffeine', 'Cafeína', 'counter', 'consumo', { unit: 'bebidas' }, { required: false, sensitive: true }),
     T('alcohol', 'Alcohol', 'counter', 'consumo', { unit: 'bebidas' }, { required: false, sensitive: true }),
     T('skin', 'Skincare', 'bool', 'habitos'),
@@ -428,6 +429,7 @@ async function openDB(demo) {
   }
   S.meta = Object.assign(defaultMeta(), meta);
   S.trackers = await db.all('trackers');
+  const jt = S.trackers.find(t => t.id === 'joints'); if (jt && jt.name === 'Porros') { jt.name = 'CBD'; await db.put('trackers', jt); }
   S.tags = new Map((await db.all('tags')).map(t => [t.id, t]));
   S.A = null;
 }
@@ -752,7 +754,7 @@ function vCol() {
     const c = cols.find(x => x.id === S.ui.col); if (!c) { S.ui.col = null; return vCol(); }
     const list = items.filter(i => i.collection === c.id).sort((a, b) => (a.status === 'done') - (b.status === 'done') || (a.order ?? 0) - (b.order ?? 0));
     const done = list.filter(i => i.status === 'done').length;
-    let h = `<div class="top"><button class="ib" data-a="colBack" aria-label="Volver"><i class="ph-light ph-caret-left"></i></button><div style="flex:1"><div class="kick">${done} de ${list.length}</div><h1 class="h1" style="font-size:26px">${esc(c.name)}</h1></div><button class="ib" data-a="colRename" aria-label="Renombrar"><i class="ph-light ph-pencil-simple"></i></button></div><div class="card ls" style="margin-top:16px">`;
+    let h = `<div class="top"><button class="ib" data-a="colBack" aria-label="Volver"><i class="ph-light ph-caret-left"></i></button><div style="flex:1"><div class="kick">${list.length} ${list.length === 1 ? 'elemento' : 'elementos'} · ${done} ${done === 1 ? 'hecho' : 'hechos'}</div><h1 class="h1" style="font-size:26px">${esc(c.name)}</h1></div><button class="ib" data-a="colRename" aria-label="Renombrar"><i class="ph-light ph-pencil-simple"></i></button></div><div class="card ls" style="margin-top:16px">`;
     for (const it of list) h += `<div class="li${it.status === 'done' ? ' done' : ''}"><button class="main" data-a="colToggle" data-id="${it.id}"><i class="${it.status === 'done' ? 'ph-fill ph-check-square' : 'ph-light ph-square'}" style="font-size:22px;flex:none"></i><span class="tx" style="text-decoration:none">${esc(it.text)}${it.fields?.sub ? `<small>${esc(it.fields.sub)}</small>` : ''}</span></button>${c.id === 'libros' ? `<button class="x mono" style="width:44px;color:var(--ink);font-size:13px" data-a="colRate" data-id="${it.id}" aria-label="Nota">${it.fields?.rating ?? '<i class="ph-light ph-star"></i>'}</button>` : ''}<button class="x" data-a="itemDel" data-id="${it.id}" aria-label="Borrar"><i class="ph-light ph-x"></i></button></div>`;
     h += `<div class="li"><i class="ph-light ph-plus s" style="color:var(--faint)"></i><input class="tin" style="border:0;background:transparent;padding:0;box-shadow:none" data-c="colNew" placeholder="${c.id === 'libros' ? 'Título (Autor)' : 'Añadir…'}" enterkeyhint="done"></div></div>`;
     h += `<p class="info"><i class="ph-light ph-info"></i><span>Escribe «Título (Autor)» para guardar el autor aparte.</span></p>`;
@@ -761,7 +763,7 @@ function vCol() {
   let h = `<div class="top" style="margin-bottom:16px"><h1 class="h1">Colecciones</h1><button class="ib bx" data-a="colAdd" aria-label="Nueva colección"><i class="ph-light ph-plus"></i></button></div><div class="cols">`;
   for (const c of cols) {
     const l = items.filter(i => i.collection === c.id), d = l.filter(i => i.status === 'done').length;
-    h += `<button class="col" data-a="colOpen" data-id="${c.id}"><i class="ph-light ${c.icon || 'ph-list-bullets'}"></i><b>${esc(c.name)}</b><div class="prog"><div class="bar"><div style="width:${l.length ? d / l.length * 100 : 0}%"></div></div><span>${d}/${l.length}</span></div></button>`;
+    h += `<button class="col" data-a="colOpen" data-id="${c.id}"><i class="ph-light ${c.icon || 'ph-list-bullets'}"></i><b>${esc(c.name)}</b><div class="cc"><b>${l.length}</b><span>${l.length === 1 ? 'elemento' : 'elementos'}${d ? ` · ${d} ${d === 1 ? 'hecho' : 'hechos'}` : ''}</span></div>${l.length ? `<div class="bar"><div style="width:${d / l.length * 100}%"></div></div>` : ''}</button>`;
   }
   return h + `</div>`;
 }
@@ -790,7 +792,7 @@ const M = {
   mg: dm => dm?.has('supps') ? (dm.get('supps')?.mg ? 1 : 0) : null,
   lteanina: dm => dm?.has('supps') ? (dm.get('supps')?.lteanina ? 1 : 0) : null,
 };
-const MLABEL = { sleepH: 'Horas de sueño', q3: 'Calidad del sueño', mood: 'Mood', stress: 'Estrés', energy: 'Energía', steps: 'Pasos', cigs: 'Cigarros', joints: 'Porros', caffeine: 'Cafeína', alcohol: 'Alcohol', exercise: 'Ejercicio', breathing: 'Respiración', mg: 'Magnesio', lteanina: 'L-teanina', skin: 'Skincare' };
+const MLABEL = { sleepH: 'Horas de sueño', q3: 'Calidad del sueño', mood: 'Mood', stress: 'Estrés', energy: 'Energía', steps: 'Pasos', cigs: 'Cigarros', joints: 'CBD', caffeine: 'Cafeína', alcohol: 'Alcohol', exercise: 'Ejercicio', breathing: 'Respiración', mg: 'Magnesio', lteanina: 'L-teanina', skin: 'Skincare' };
 const SENS_M = new Set(['cigs', 'joints', 'caffeine', 'alcohol']);
 function periodRange() {
   const u = S.ui, r = u.ref;
@@ -897,7 +899,7 @@ function expLabel(k) {
   const [t, id] = [k.slice(0, 1), k.slice(2)];
   if (t === 't') return [S.tags.get(id)?.name || '?', 'alimento', S.tags.get(id)?.categories?.[0]];
   if (t === 'c') return [S.meta.categories.find(c => c.id === id)?.name || id, 'categoría', id];
-  return [{ exercise: 'Ejercicio', breathing: 'Respiración', skin: 'Skincare', mg: 'Magnesio', lteanina: 'L-teanina', cigs: 'Cigarros', joints: 'Porros', alcohol: 'Alcohol', caffeine: 'Cafeína', sleep6: 'Dormir < 6 h' }[id] || id, 'hábito', null];
+  return [{ exercise: 'Ejercicio', breathing: 'Respiración', skin: 'Skincare', mg: 'Magnesio', lteanina: 'L-teanina', cigs: 'Cigarros', joints: 'CBD', alcohol: 'Alcohol', caffeine: 'Cafeína', sleep6: 'Dormir < 6 h' }[id] || id, 'hábito', null];
 }
 const relOf = n => n < 10 ? 'baja' : n < 25 ? 'media' : 'alta';
 function pearson(xs, ys) {
