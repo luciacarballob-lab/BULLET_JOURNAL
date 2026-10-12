@@ -1,5 +1,5 @@
 /* Bujo service worker. Sube VERSION en cada entrega para refrescar la caché offline. */
-const VERSION = '0.2.0';
+const VERSION = '0.2.1';
 const CACHE = 'bujo-' + VERSION;
 const CDN = 'bujo-cdn-v1';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
