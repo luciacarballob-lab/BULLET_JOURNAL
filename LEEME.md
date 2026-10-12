@@ -1,4 +1,42 @@
-# Bujo · v0.2.1
+# Bujo · v0.4.2
+
+## v0.4.2
+- Patrones explicados en lenguaje sencillo: «Duermes 7 h o más → tu energía sube», con la comparación de los dos grupos de días y cuántos días hay detrás. Sin coeficientes ni ratios.
+
+## v0.4.1
+- Estadísticas: siempre aparece una gráfica por cada tracker activo, aunque todavía no tenga datos.
+
+## v0.4.0
+- Análisis → Estadísticas: gráfico para cada tracker (sueño, mood, estrés, energía, pasos, peso, comidas, digestivo, deposiciones, pastilla, consumo, agua, hábitos, suplementos, sexo y trackers propios).
+- Constancia: % de días cumplidos con racha actual y mejor racha; tendencia vs periodo anterior.
+- Semana y mes se ven por día, año por mes y rangos largos por semana o mes.
+- Gráfico de líneas por defecto; cambia a barras con el botón de arriba (se recuerda).
+
+## v0.3.1
+- Arreglado: los selectores de hora y fecha se cerraban al parar la rueda. Ahora se guarda al pulsar fuera o cerrar el selector.
+
+## v0.3.0
+- Comidas: toca un plato (p. ej. «pizza») para apuntar sus ingredientes. Puedes guardarlo como receta y se rellena sola la próxima vez.
+- Los ingredientes y sus categorías cuentan en Patrones y salen en el CSV.
+- 41 categorías de alimentos en 4 grupos: 14 alérgenos UE, FODMAP (fructanos, GOS, lactosa, fructosa, sorbitol, manitol), irritantes digestivos y tipo de alimento.
+- Al crear un alimento, la app sugiere sus categorías (≈ 200 alimentos comunes). Editables en Ajustes → Alimentos y categorías.
+- **Datos:** esquema v3. Se añaden las categorías nuevas, se conservan las tuyas y solo se sugieren categorías a alimentos que no tenían ninguna. Exporta un backup antes.
+
+## v0.2.6
+- Colecciones: atajos de plazo (en 1 semana, 2 semanas, 1 mes, 3 meses, 6 meses, 1 año) que rellenan la fecha tope.
+
+## v0.2.5
+- Lista de deseos: precio (€) y enlace de compra en cada producto. La cabecera suma el total pendiente.
+
+## v0.2.4
+- Colecciones (tareas pendientes, goals, deseos…): cada tarea admite fecha tope y nota.
+- 5 días antes de la fecha tope, si no está hecha, aparece en Hoy en «Fecha tope cerca» (sin notificaciones push: se ve al abrir la app).
+
+## v0.2.3
+- Libros: al añadir o tocar un libro, ficha con autor, fecha, puntuación (1–10) y formato físico/digital.
+
+## v0.2.2
+- Diario: añadir eventos, viajes, citas y elecciones desde el registro mensual (botones de categoría + «+» en cada día) y desde el registro futuro («+» en cada mes).
 
 ## v0.2.1
 - «Porros» pasa a llamarse «CBD» (el histórico se conserva).
